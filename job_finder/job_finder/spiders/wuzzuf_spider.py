@@ -48,20 +48,44 @@ class WuzzufSpider(scrapy.Spider):
             location = card.css('span.css-16x61xq::text').get()
             job_type = card.css('span.css-uc9rga::text').get()
             
+
+
+            # Strict Filtering: Check if title is relevant
+            # Use regex for word boundaries to avoid partial matches like "Waiter" (AI) or "Sustainability" (AI)
+            import re
+            
+            relevant_keywords = [
+                r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
+                r'Motion', r'Animation', r'Visualizer', r'Art Director', 
+                r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
+                r'VFX', r'Creative', r'Frontend', r'Web'
+            ]
+            
+            # Create a combined regex pattern: \b(Designer|3D|...)\b
+            # We escape keywords just in case, though they are simple here
+            pattern = re.compile(r'\b(' + '|'.join(relevant_keywords) + r')\b', re.IGNORECASE)
+            
+            if not pattern.search(title):
+                self.logger.info(f"Skipping irrelevant title: {title}")
+                continue
+
+
             # Cleaning up company name (it often has " -" at the end)
             if company:
                 company = company.replace('-', '').strip()
 
-            if title and link:
-                yield {
-                    'keyword_searched': response.meta.get('keyword'),
-                    'title': title,
-                    'company': company,
-                    'location': location,
-                    'type': job_type,
-                    'link': link,
-                    'source': 'Wuzzuf'
-                }
+            item = {
+                'keyword_searched': response.meta.get('keyword'),
+                'title': title,
+                'company': company,
+                'location': location,
+                'type': job_type,
+                'link': link,
+                'source': 'Wuzzuf'
+            }
+            
+            yield item
+
         
         # Pagination: Look for a "Next" button. 
         # In the HTML, there are buttons with class 'css-1y7kjgo' or links ?start=X
