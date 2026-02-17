@@ -17,6 +17,7 @@ import json
 from urllib.parse import urlencode, quote_plus
 from typing import List, Dict
 import logging
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +27,11 @@ class RemoteJobsSpider(scrapy.Spider):
     Spider that searches for remote job positions in UAE and Europe.
     Uses web search to discover career pages and extracts job listings.
     """
-    
+
     name = "remote_jobs"
-    
+
     # CV-based keywords for job filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital',
-        r'Remote', r'Hybrid'
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
     
     # Search queries for finding remote jobs
     search_queries = [

@@ -21,6 +21,7 @@ import json
 import logging
 from typing import Dict, List, Optional
 from urllib.parse import urlencode
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +44,7 @@ class PlaywrightJobsSpider(scrapy.Spider):
     name = "playwright_jobs"
     
     # CV-based keywords
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital', r'Remote'
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
     
     # Sites that require JavaScript rendering
     js_heavy_sites = [

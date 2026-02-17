@@ -2,10 +2,11 @@
 import scrapy
 import re
 from urllib.parse import urlencode
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 class WuzzufSpider(scrapy.Spider):
     name = "wuzzuf_jobs"
-    
+
     # Base search URL for Wuzzuf
     base_url = "https://wuzzuf.net/search/jobs/?"
 
@@ -19,14 +20,9 @@ class WuzzufSpider(scrapy.Spider):
         "Blender",
         "Unreal Engine"
     ]
-    
+
     # CV-based keywords for filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web'
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
 
     def start_requests(self):
         for keyword in self.keywords:

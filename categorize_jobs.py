@@ -23,6 +23,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, 'job_finder', 'output')
 BY_SOURCE = os.path.join(OUTPUT_DIR, 'by_source')
 BY_CATEGORY = os.path.join(OUTPUT_DIR, 'by_category')
 BY_REGION = os.path.join(OUTPUT_DIR, 'by_region')
+SOCIAL_MEDIA = os.path.join(OUTPUT_DIR, 'social_media')
 
 
 def load_json_file(filepath):
@@ -84,10 +85,10 @@ def main():
     print("Loading jobs from source files...")
     all_jobs = []
     
-    # Try both possible output locations
+    # Scan all output locations (job boards + social media)
     source_patterns = [
         os.path.join(BY_SOURCE, '*.json'),
-        os.path.join(OUTPUT_DIR, '*.json'),
+        os.path.join(SOCIAL_MEDIA, '*.json'),
     ]
     
     for pattern in source_patterns:

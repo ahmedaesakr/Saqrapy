@@ -17,6 +17,7 @@ import re
 import json
 from urllib.parse import urlencode, quote_plus
 import logging
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +35,7 @@ class TwitterSearchSpider(scrapy.Spider):
     name = "twitter_jobs"
 
     # CV-based keywords for filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX',
-        r'Motion', r'Animation', r'Visualizer', r'Art Director',
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital',
-        r'DOOH', r'Figma',
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
 
     # Twitter search queries (each under 512 chars for API)
     search_queries = [

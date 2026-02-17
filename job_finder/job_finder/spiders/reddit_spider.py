@@ -17,6 +17,7 @@ import re
 import json
 from urllib.parse import urlencode, quote_plus
 import logging
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,7 @@ class RedditJobsSpider(scrapy.Spider):
     allowed_domains = ["www.reddit.com", "old.reddit.com"]
 
     # CV-based keywords for filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX',
-        r'Motion', r'Animation', r'Visualizer', r'Art Director',
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital',
-        r'Remote', r'Hybrid', r'DOOH', r'Figma', r'After Effects',
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
 
     # Subreddits to search for jobs
     job_subreddits = [

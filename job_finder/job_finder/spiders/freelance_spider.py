@@ -6,19 +6,14 @@ Targets: Upwork, Freelancer, Mostaql (Arabic), Khamsat (Arabic)
 import scrapy
 from urllib.parse import urlencode
 import re
+from job_finder.cv_config import RELEVANT_KEYWORDS, FREELANCE_EXTRA_KEYWORDS
 
 
 class FreelanceSpider(scrapy.Spider):
     name = "freelance_jobs"
-    
+
     # CV-based keywords for filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital', r'Logo',
-        r'Video', r'Render', r'Model'
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS + FREELANCE_EXTRA_KEYWORDS
     
     # Keywords to search based on CV - simpler for freelance platforms
     search_keywords = [

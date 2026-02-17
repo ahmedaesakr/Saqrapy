@@ -17,6 +17,7 @@ import re
 import json
 from urllib.parse import urlencode, quote_plus
 import logging
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -33,13 +34,7 @@ class FacebookSearchSpider(scrapy.Spider):
     name = "facebook_jobs"
 
     # CV-based keywords
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX',
-        r'Motion', r'Animation', r'Visualizer', r'Art Director',
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital',
-        r'DOOH', r'Figma',
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
 
     # DuckDuckGo search queries targeting Facebook
     search_queries_en = [

@@ -6,18 +6,14 @@ Output should be combined with Wuzzuf results
 import scrapy
 from urllib.parse import urlencode
 import re
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 
 class IndeedSpider(scrapy.Spider):
     name = "indeed_jobs"
-    
+
     # CV-based keywords for filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital'
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
     
     # Keywords to search based on CV
     search_keywords = [
@@ -85,7 +81,7 @@ class IndeedSpider(scrapy.Spider):
         if not job_cards:
             self.logger.warning("No job cards found on Indeed page. Selectors may be outdated.")
             # Save HTML for debugging
-            with open(f'indeed_debug_{response.meta.get("keyword", "unknown")}.html', 'wb') as f:
+            with open(f'output/debug/indeed_debug_{response.meta.get("keyword", "unknown")}.html', 'wb') as f:
                 f.write(response.body)
         
         pattern = re.compile(r'\b(' + '|'.join(self.relevant_keywords) + r')\b', re.IGNORECASE)

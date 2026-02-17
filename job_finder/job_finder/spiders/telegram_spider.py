@@ -16,6 +16,7 @@ import re
 import json
 from urllib.parse import urlencode, quote_plus
 import logging
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +32,7 @@ class TelegramJobsSpider(scrapy.Spider):
     name = "telegram_jobs"
 
     # CV-based keywords
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX',
-        r'Motion', r'Animation', r'Visualizer', r'Art Director',
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital',
-        r'DOOH', r'Figma', r'مصمم', r'ديزاينر', r'جرافيك',
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
 
     # Known Telegram job channels
     job_channels = [

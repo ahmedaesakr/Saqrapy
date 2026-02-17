@@ -9,18 +9,14 @@ For better results, consider using LinkedIn's official API or job alerts via ema
 import scrapy
 from urllib.parse import urlencode
 import re
+from job_finder.cv_config import RELEVANT_KEYWORDS
 
 
 class LinkedInSpider(scrapy.Spider):
     name = "linkedin_jobs"
-    
+
     # CV-based keywords for filtering
-    relevant_keywords = [
-        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-        r'VFX', r'Creative', r'Frontend', r'Web', r'Digital'
-    ]
+    relevant_keywords = RELEVANT_KEYWORDS
     
     # Keywords to search based on CV
     search_keywords = [
@@ -95,7 +91,7 @@ class LinkedInSpider(scrapy.Spider):
         if not job_cards:
             self.logger.warning("No job cards found on LinkedIn. Page may be JS-rendered or blocked.")
             # Save for debugging
-            with open(f'linkedin_debug_{response.meta.get("keyword", "unknown")}.html', 'wb') as f:
+            with open(f'output/debug/linkedin_debug_{response.meta.get("keyword", "unknown")}.html', 'wb') as f:
                 f.write(response.body)
             return
         

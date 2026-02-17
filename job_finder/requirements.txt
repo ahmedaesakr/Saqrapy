@@ -26,8 +26,8 @@ itemadapter>=0.8.0
 # httpx>=0.25.0
 # aiohttp>=3.9.0
 
-# Optional: For captcha solving integration
-# requests>=2.31.0  # For 2Captcha API calls
+# For HTTP requests (social media posters, captcha solving)
+requests>=2.31.0
 
 # Development tools
 # pytest>=7.4.0

@@ -20,6 +20,7 @@ OUTPUT_DIR = os.path.join(BASE_DIR, 'job_finder', 'output')
 BY_SOURCE = os.path.join(OUTPUT_DIR, 'by_source')
 BY_CATEGORY = os.path.join(OUTPUT_DIR, 'by_category')
 BY_REGION = os.path.join(OUTPUT_DIR, 'by_region')
+SOCIAL_MEDIA = os.path.join(OUTPUT_DIR, 'social_media')
 
 
 def load_json_file(filepath):
@@ -89,7 +90,15 @@ def create_excel_v2():
         '🏛️ Careers': os.path.join(BY_SOURCE, 'career_pages.json'),
         '🌐 Remote': os.path.join(BY_SOURCE, 'remote_jobs.json'),
     }
-    
+
+    # --- SOCIAL MEDIA ---
+    social_files = {
+        '🤖 Reddit': os.path.join(SOCIAL_MEDIA, 'reddit.json'),
+        '🐦 Twitter': os.path.join(SOCIAL_MEDIA, 'twitter.json'),
+        '📘 Facebook': os.path.join(SOCIAL_MEDIA, 'facebook.json'),
+        '📱 Telegram': os.path.join(SOCIAL_MEDIA, 'telegram.json'),
+    }
+
     # --- BY CATEGORY ---
     category_files = {
         '🏠 Remote Jobs': os.path.join(BY_CATEGORY, 'remote_jobs.json'),
@@ -106,14 +115,13 @@ def create_excel_v2():
         '🌍 Global': os.path.join(BY_REGION, 'global_jobs.json'),
     }
     
-    # --- LEGACY FILES (for backwards compatibility) ---
-    legacy_files = {
-        'Combined': os.path.join(OUTPUT_DIR, 'wuzzuf_indeed.json'),
+    # --- ALL JOBS ---
+    combined_files = {
         'All Jobs': os.path.join(OUTPUT_DIR, 'all_jobs_categorized.json'),
     }
-    
+
     # Combine all file mappings
-    all_files = {**source_files, **category_files, **region_files, **legacy_files}
+    all_files = {**source_files, **social_files, **category_files, **region_files, **combined_files}
     
     print("Loading data from JSON files...")
     
