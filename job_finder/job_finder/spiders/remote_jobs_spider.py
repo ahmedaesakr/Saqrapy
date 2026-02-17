@@ -17,9 +17,17 @@ import json
 from urllib.parse import urlencode, quote_plus
 from typing import List, Dict
 import logging
-from job_finder.cv_config import RELEVANT_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, is_relevant
 
 logger = logging.getLogger(__name__)
+
+# URL paths that indicate non-job pages (blog posts, news, press releases, etc.)
+_SKIP_URL_PARTS = [
+    '/blog/', '/news/', '/press/', '/about/', '/story/', '/article/',
+    '/media/', '/events/', '/insights/', '/resources/', '/podcast/',
+    '/whitepaper/', '/report/', '/magazine/', '/newsletter/',
+    '/privacy', '/terms', '/cookie', '/legal', '/sitemap',
+]
 
 
 class RemoteJobsSpider(scrapy.Spider):
@@ -475,20 +483,29 @@ class RemoteJobsSpider(scrapy.Spider):
                 
                 if not title or not href:
                     continue
-                    
+
                 title = title.strip()
-                
+
+                # Skip very short titles (nav links, generic text)
+                if len(title) < 5:
+                    continue
+
                 # Make link absolute
                 if href.startswith('/'):
                     href = response.urljoin(href)
                 elif not href.startswith('http'):
                     continue
-                
+
+                # Skip non-job URLs (blog, news, press, about pages)
+                href_lower = href.lower()
+                if any(part in href_lower for part in _SKIP_URL_PARTS):
+                    continue
+
                 # Dedup
                 if href in seen_links:
                     continue
                 seen_links.add(href)
-                
+
                 # Check relevance to CV
                 if not pattern.search(title):
                     continue
@@ -583,16 +600,23 @@ class RemoteJobsSpider(scrapy.Spider):
             
             if not title:
                 continue
-                
+
             title = title.strip()
-            
+
+            if len(title) < 5:
+                continue
+
             if not pattern.search(title):
                 continue
-            
+
             href = card.css('a::attr(href)').get()
             if href:
                 if not href.startswith('http'):
                     href = response.urljoin(href)
+
+                # Skip non-job URLs
+                if any(part in href.lower() for part in _SKIP_URL_PARTS):
+                    continue
                 
                 company = card.css('.company::text, .company-name::text').get() or 'Via ' + board_name
                 location = card.css('.location::text, .job-location::text').get() or 'Remote'

@@ -75,8 +75,11 @@ def create_excel_v2():
     print(f"  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60 + "\n")
     
-    # Output Excel file
-    excel_path = os.path.join(BASE_DIR, 'job_finder', 'all_jobs_v2.xlsx')
+    # Output Excel file with timestamp so each run is unique
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    excel_path = os.path.join(BASE_DIR, 'job_finder', f'all_jobs_v2_{timestamp}.xlsx')
+    # Also save as latest (overwrite) for quick access
+    latest_path = os.path.join(BASE_DIR, 'job_finder', 'all_jobs_v2_latest.xlsx')
     
     # Define sheets to create
     sheets = {}
@@ -160,21 +163,22 @@ def create_excel_v2():
     # --- WRITE TO EXCEL ---
     print(f"\nWriting to Excel: {excel_path}")
     
-    with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
-        # Summary first
-        if not summary_df.empty:
-            summary_df.to_excel(writer, sheet_name='📊 Summary', index=False)
-            print("  ✓ Summary sheet created")
-        
-        # All other sheets
-        for sheet_name, df in sheets.items():
-            if not df.empty:
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
-    
+    for out_path in [excel_path, latest_path]:
+        with pd.ExcelWriter(out_path, engine='openpyxl') as writer:
+            # Summary first
+            if not summary_df.empty:
+                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+
+            # All other sheets
+            for sheet_name, df in sheets.items():
+                if not df.empty:
+                    df.to_excel(writer, sheet_name=sheet_name, index=False)
+
     print("\n" + "=" * 60)
     print("  EXCEL EXPORT COMPLETE!")
     print("=" * 60)
-    print(f"\n  File: {excel_path}")
+    print(f"\n  Timestamped: {excel_path}")
+    print(f"  Latest:      {latest_path}")
     print(f"  Sheets: {len(sheets) + 1}")
     print(f"  Total rows: {sum(len(df) for df in sheets.values())}")
     print()

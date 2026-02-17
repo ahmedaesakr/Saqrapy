@@ -2,7 +2,7 @@
 import scrapy
 import re
 from urllib.parse import urlencode
-from job_finder.cv_config import RELEVANT_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, SEARCH_KEYWORDS, is_relevant
 
 class WuzzufSpider(scrapy.Spider):
     name = "wuzzuf_jobs"
@@ -10,16 +10,8 @@ class WuzzufSpider(scrapy.Spider):
     # Base search URL for Wuzzuf
     base_url = "https://wuzzuf.net/search/jobs/?"
 
-    # Keywords to search based on your CV
-    keywords = [
-        "Product Designer",
-        "3D Artist",
-        "CGI Artist",
-        "Digital Product Designer",
-        "Generative AI",
-        "Blender",
-        "Unreal Engine"
-    ]
+    # Use centralized search keywords from cv_config
+    keywords = SEARCH_KEYWORDS
 
     # CV-based keywords for filtering
     relevant_keywords = RELEVANT_KEYWORDS
@@ -60,7 +52,7 @@ class WuzzufSpider(scrapy.Spider):
             # Create a combined regex pattern: \b(Designer|3D|...)\b
             pattern = re.compile(r'\b(' + '|'.join(self.relevant_keywords) + r')\b', re.IGNORECASE)
             
-            if not pattern.search(title):
+            if not is_relevant(title=title):
                 self.logger.info(f"Skipping irrelevant title: {title}")
                 continue
 

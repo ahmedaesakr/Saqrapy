@@ -6,7 +6,7 @@ Targets: Upwork, Freelancer, Mostaql (Arabic), Khamsat (Arabic)
 import scrapy
 from urllib.parse import urlencode
 import re
-from job_finder.cv_config import RELEVANT_KEYWORDS, FREELANCE_EXTRA_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, FREELANCE_EXTRA_KEYWORDS, is_relevant
 
 
 class FreelanceSpider(scrapy.Spider):

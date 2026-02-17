@@ -5,13 +5,18 @@ Searches Twitter/X for job posts matching Ahmed's CV profile.
 Upgraded with Saudi Arabia, Emirates, Egypt, and Gulf region focus.
 
 Features:
-- Twitter API v2 Recent Search (requires Bearer Token)
-- Fallback to Nitter public instances (no auth needed)
-- DuckDuckGo site:twitter.com + site:x.com search (no auth needed)
+- Twitter Syndication API (NO auth needed! scrapes profile timelines)
+- Twitter API v2 Recent Search (optional, requires Bearer Token)
 - CV-based keyword filtering + Arabic keyword support
 - Saudi Arabia, UAE, Egypt, and Gulf job market coverage
 - Extracts tweet text, author, links, engagement metrics
-- Handles threads and quoted tweets
+
+How it works:
+  Without API key: Scrapes 40+ job account timelines via Twitter's
+  syndication endpoint (up to 99 tweets each). Filters for CV-relevant posts.
+
+  With API key: Also runs keyword searches via Twitter API v2 for
+  broader coverage. Set TWITTER_BEARER_TOKEN in settings.py.
 """
 
 import scrapy
@@ -19,7 +24,7 @@ import re
 import json
 from urllib.parse import urlencode, quote_plus
 import logging
-from job_finder.cv_config import RELEVANT_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, is_relevant_social
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +33,9 @@ class TwitterSearchSpider(scrapy.Spider):
     """
     Spider that searches Twitter/X for job posts matching CV profile.
 
-    Supports 3 modes:
-    1. Twitter API v2 (best, needs TWITTER_BEARER_TOKEN)
-    2. Nitter instances (good, no auth needed)
-    3. DuckDuckGo site search (fallback, always works)
+    Modes:
+    1. Twitter Syndication (default, no auth needed) - scrapes profile timelines
+    2. Twitter API v2 (optional, needs TWITTER_BEARER_TOKEN) - keyword search
     """
 
     name = "twitter_jobs"
@@ -39,9 +43,9 @@ class TwitterSearchSpider(scrapy.Spider):
     # CV-based keywords for filtering
     relevant_keywords = RELEVANT_KEYWORDS
 
-    # Twitter search queries (each under 512 chars for API)
+    # Twitter search queries - only used with API v2 bearer token
     search_queries = [
-        # ── English: Direct hiring tweets ──
+        # English: Direct hiring tweets
         '"hiring" "3D artist"',
         '"hiring" "product designer"',
         '"hiring" "UI designer" OR "UX designer"',
@@ -51,44 +55,25 @@ class TwitterSearchSpider(scrapy.Spider):
         '"hiring" "blender" OR "unreal engine"',
         '"hiring" "generative AI" OR "AI designer"',
         '"hiring" "creative director" OR "art director"',
-        '#hiring designer',
-        '#remotejobs designer',
-        '#designjobs',
-        '#3Dartist hiring',
 
-        # ── Saudi Arabia / Gulf focus ──
+        # Saudi Arabia / Gulf focus
         '"hiring" "designer" "Saudi Arabia" OR "Riyadh" OR "Jeddah"',
         '"hiring" "designer" "Dubai" OR "Abu Dhabi" OR "UAE"',
         '"hiring" "3D" OR "CGI" "Saudi" OR "Gulf"',
-        '"hiring" "motion" OR "VFX" "Riyadh" OR "Dubai"',
         '"we are hiring" designer "KSA" OR "Saudi"',
-        '#SaudiJobs designer',
-        '#UAEjobs designer',
-        '#وظائف_السعودية مصمم',
-        '#وظائف_الامارات مصمم',
 
-        # ── Arabic: Saudi & Gulf hiring tweets ──
+        # Arabic
         'مطلوب مصمم ثلاثي الابعاد',
         'مطلوب مصمم جرافيك السعودية',
         'نبحث عن مصمم UI UX',
         'مطلوب مصمم موشن جرافيك',
-        'وظيفة مصمم الرياض OR جدة',
-        'مطلوب مصمم دبي OR ابوظبي',
         'توظيف مصمم عن بعد',
-        '#توظيف مصمم',
-        '#وظائف مصمم',
-        'فرصة عمل مصمم ثري دي',
-        'مطلوب مصمم CGI OR بلندر OR Blender',
-
-        # ── Egypt focus ──
-        '"hiring" "designer" "Egypt" OR "Cairo"',
         'مطلوب مصمم مصر OR القاهرة',
-        '#وظائف_مصر مصمم',
     ]
 
-    # Accounts known to post design/creative jobs
+    # Accounts to scrape via syndication - these post job listings
     job_accounts = [
-        # ── International Design Jobs ──
+        # ── International: Design & Creative Jobs ──
         "designjobsboard",
         "UXDesignJobs",
         "remoteworkhunt",
@@ -97,60 +82,78 @@ class TwitterSearchSpider(scrapy.Spider):
         "AIJobsBoard",
         "RemoteOK",
         "wikijobart",
+        "Designjobs",
+        "UXJobBoard",
+        "driaborh",
+        "DesignJobsHQ",
+        "GraphicDesignJB",
+        "CreativeJobsCen",
 
         # ── Saudi Arabia & Gulf Job Accounts ──
         "SaudiJobs_",
         "JobsSaudi",
-        "Baaborh",              # Saudi job listings
-        "Jadarat_sa",           # Jadarat Saudi platform
-        "ABORH_",               # Saudi HR platform
-        "LinkedInKSA",          # LinkedIn Saudi
-        "GulfTalent",           # Gulf-wide talent
-        "DubaiCareers",         # Dubai careers
-        "UAEJobs_",             # UAE jobs
-        "NaukriGulf",           # Naukri Gulf
-        "waborh",               # Saudi recruitment
+        "Baaborh",
+        "Jadarat_sa",
+        "ABORH_",
+        "GulfTalent",
+        "DubaiCareers",
+        "UAEJobs_",
+        "NaukriGulf",
+        "waborh",
+        "Tawdheef",
+        "SaudiExpatriates",
+        "JobzillaSA",
+        "waaborh",
+        "HRDFsaudi",
 
         # ── Egypt & MENA ──
-        "WuzzufCareers",        # Wuzzuf Egypt
-        "JobsMasterEG",         # Egypt jobs
-    ]
+        "WuzzufCareers",
+        "JobsMasterEG",
+        "ForasaMasria",
+        "ElWazifa",
 
-    # Nitter instances (public Twitter mirrors, no auth needed)
-    nitter_instances = [
-        "nitter.net",
-        "nitter.privacydev.net",
+        # ── Tech Companies (post job openings on X) ──
+        "CanvaCareers",
+        "FigmaCareers",
+        "SpotifyJobs",
+        "EpicGames",
+        "unrealengine",
+        "unity3d",
     ]
 
     custom_settings = {
-        'DOWNLOAD_DELAY': 3,
-        'CONCURRENT_REQUESTS': 3,
+        'DOWNLOAD_DELAY': 4,
+        'CONCURRENT_REQUESTS': 2,
         'CONCURRENT_REQUESTS_PER_DOMAIN': 1,
         'AUTOTHROTTLE_ENABLED': True,
-        'AUTOTHROTTLE_START_DELAY': 2,
-        'AUTOTHROTTLE_MAX_DELAY': 15,
+        'AUTOTHROTTLE_START_DELAY': 3,
+        'AUTOTHROTTLE_MAX_DELAY': 20,
+        'RETRY_TIMES': 2,
+        'RETRY_HTTP_CODES': [429, 500, 502, 503],
     }
 
     def __init__(self, bearer_token=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.bearer_token = bearer_token or self.settings.get('TWITTER_BEARER_TOKEN')
-        self.use_api = bool(self.bearer_token)
+        self._bearer_token_arg = bearer_token
         self.seen_tweets = set()
 
     def start_requests(self):
-        """Generate requests based on available authentication"""
+        """Generate requests - syndication profiles + optional API search"""
+        # Access settings here (not in __init__) because Scrapy sets them later
+        self.bearer_token = self._bearer_token_arg or self.settings.get('TWITTER_BEARER_TOKEN')
+        self.use_api = bool(self.bearer_token)
 
+        # MODE 1: If API token available, run keyword searches
         if self.use_api:
-            logger.info("Using Twitter API v2 with Bearer Token")
+            logger.info("Twitter API v2 Bearer Token found - running keyword searches")
             yield from self._api_requests()
         else:
-            logger.info("No Twitter Bearer Token found. Using Nitter + DuckDuckGo fallback")
+            logger.info("No Twitter Bearer Token. Using syndication profile scraping only.")
+            logger.info("Tip: Set TWITTER_BEARER_TOKEN in settings.py for broader search coverage.")
 
-        # Always run DuckDuckGo site search as supplementary source
-        yield from self._duckduckgo_requests()
-
-        # Always scrape Nitter for known job accounts
-        yield from self._nitter_requests()
+        # MODE 2: Always scrape job account timelines via syndication (no auth needed)
+        logger.info(f"Scraping {len(self.job_accounts)} job account timelines via syndication...")
+        yield from self._syndication_requests()
 
     # =========================================================================
     # MODE 1: Twitter API v2 (Best quality, needs auth)
@@ -159,7 +162,6 @@ class TwitterSearchSpider(scrapy.Spider):
     def _api_requests(self):
         """Generate Twitter API v2 search requests"""
         for query in self.search_queries:
-            # Use lang:en for English queries, lang:ar for Arabic
             has_arabic = bool(re.search(r'[\u0600-\u06FF]', query))
             lang_filter = 'lang:ar' if has_arabic else 'lang:en'
 
@@ -203,301 +205,135 @@ class TwitterSearchSpider(scrapy.Spider):
 
         logger.info(f"Twitter API returned {len(tweets)} tweets for: {query}")
 
-        pattern = re.compile(
-            r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
-            re.IGNORECASE
-        )
-        arabic_pattern = re.compile(
-            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب)',
-            re.IGNORECASE
-        )
-
         for tweet in tweets:
             tweet_id = tweet.get('id', '')
-
             if tweet_id in self.seen_tweets:
                 continue
             self.seen_tweets.add(tweet_id)
 
             text = tweet.get('text', '')
-
-            if not pattern.search(text) and not arabic_pattern.search(text):
+            if not self._is_relevant(text):
                 continue
 
             author_id = tweet.get('author_id', '')
             user = users.get(author_id, {})
             username = user.get('username', 'unknown')
             display_name = user.get('name', username)
-
             metrics = tweet.get('public_metrics', {})
 
-            # Extract URLs from entities
             urls = []
             for url_entity in tweet.get('entities', {}).get('urls', []):
                 expanded = url_entity.get('expanded_url', '')
                 if expanded and 'twitter.com' not in expanded:
                     urls.append(expanded)
 
-            apply_link = self._find_apply_link(urls)
-
             yield self._build_item(
                 text=text,
                 username=username,
                 display_name=display_name,
                 tweet_id=tweet_id,
-                apply_link=apply_link,
+                apply_link=self._find_apply_link(urls),
                 likes=metrics.get('like_count', 0),
                 retweets=metrics.get('retweet_count', 0),
                 query=query,
             )
 
     # =========================================================================
-    # MODE 2: Nitter (No auth needed, public Twitter mirror)
+    # MODE 2: Twitter Syndication (No auth needed! Primary method)
     # =========================================================================
 
-    def _nitter_requests(self):
-        """Generate Nitter requests for known job accounts"""
-        for instance in self.nitter_instances[:1]:  # Use first working instance
-            for account in self.job_accounts:
-                url = f"https://{instance}/{account}"
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_nitter_profile,
-                    meta={
-                        'account': account,
-                        'instance': instance,
-                    },
-                    errback=self.handle_error,
-                    dont_filter=True,
-                )
-
-            # Nitter search
-            for query in self.search_queries[:8]:
-                clean_query = query.replace('"', '').replace('#', '')
-                url = f"https://{instance}/search?q={quote_plus(clean_query)}&f=tweets"
-                yield scrapy.Request(
-                    url,
-                    callback=self.parse_nitter_search,
-                    meta={
-                        'query': query,
-                        'instance': instance,
-                    },
-                    errback=self.handle_error,
-                    dont_filter=True,
-                )
-
-    def parse_nitter_profile(self, response):
-        """Parse a Nitter profile page for job tweets"""
-        account = response.meta.get('account', 'unknown')
-        instance = response.meta.get('instance', '')
-
-        pattern = re.compile(
-            r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
-            re.IGNORECASE
-        )
-        arabic_pattern = re.compile(
-            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب)',
-            re.IGNORECASE
-        )
-
-        # Nitter uses .timeline-item for tweets
-        tweets = response.css('.timeline-item')
-
-        for tweet in tweets:
-            text = ' '.join(tweet.css('.tweet-content::text, .tweet-content a::text').getall()).strip()
-
-            if not text or (not pattern.search(text) and not arabic_pattern.search(text)):
-                continue
-
-            # Get tweet link
-            tweet_link = tweet.css('.tweet-link::attr(href)').get()
-            if tweet_link:
-                # Convert Nitter link to Twitter link
-                tweet_id = tweet_link.strip('/').split('/')[-1]
-            else:
-                tweet_id = ''
-
-            username = tweet.css('.username::text').get('').strip().lstrip('@') or account
-            display_name = tweet.css('.fullname::text').get('').strip() or account
-
-            # Extract links from tweet
-            links = tweet.css('.tweet-content a::attr(href)').getall()
-            external_links = [l for l in links if 'twitter.com' not in l and l.startswith('http')]
-            apply_link = self._find_apply_link(external_links)
-
-            stats = tweet.css('.tweet-stat .tweet-stat-num::text').getall()
-            likes = int(stats[2]) if len(stats) > 2 and stats[2].isdigit() else 0
-            retweets = int(stats[1]) if len(stats) > 1 and stats[1].isdigit() else 0
-
-            if tweet_id not in self.seen_tweets:
-                self.seen_tweets.add(tweet_id)
-                yield self._build_item(
-                    text=text,
-                    username=username,
-                    display_name=display_name,
-                    tweet_id=tweet_id,
-                    apply_link=apply_link,
-                    likes=likes,
-                    retweets=retweets,
-                    query=f'@{account}',
-                )
-
-    def parse_nitter_search(self, response):
-        """Parse Nitter search results"""
-        query = response.meta.get('query', 'unknown')
-
-        pattern = re.compile(
-            r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
-            re.IGNORECASE
-        )
-        arabic_pattern = re.compile(
-            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب)',
-            re.IGNORECASE
-        )
-
-        tweets = response.css('.timeline-item')
-        logger.info(f"Nitter search found {len(tweets)} tweets for: {query}")
-
-        for tweet in tweets:
-            text = ' '.join(tweet.css('.tweet-content::text, .tweet-content a::text').getall()).strip()
-
-            if not text or (not pattern.search(text) and not arabic_pattern.search(text)):
-                continue
-
-            tweet_link = tweet.css('.tweet-link::attr(href)').get()
-            tweet_id = tweet_link.strip('/').split('/')[-1] if tweet_link else ''
-
-            username = tweet.css('.username::text').get('').strip().lstrip('@')
-            display_name = tweet.css('.fullname::text').get('').strip() or username
-
-            links = tweet.css('.tweet-content a::attr(href)').getall()
-            external_links = [l for l in links if 'twitter.com' not in l and l.startswith('http')]
-            apply_link = self._find_apply_link(external_links)
-
-            if tweet_id and tweet_id not in self.seen_tweets:
-                self.seen_tweets.add(tweet_id)
-                yield self._build_item(
-                    text=text,
-                    username=username,
-                    display_name=display_name,
-                    tweet_id=tweet_id,
-                    apply_link=apply_link,
-                    likes=0,
-                    retweets=0,
-                    query=query,
-                )
-
-    # =========================================================================
-    # MODE 3: DuckDuckGo site:twitter.com search (Always works)
-    # =========================================================================
-
-    def _duckduckgo_requests(self):
-        """Generate DuckDuckGo site:twitter.com + site:x.com search requests"""
-        ddg_queries = [
-            # ── English: Global design/creative jobs ──
-            'site:twitter.com "hiring" "3D artist"',
-            'site:twitter.com "hiring" "product designer" "remote"',
-            'site:twitter.com "hiring" "UI UX designer"',
-            'site:twitter.com "hiring" "motion designer"',
-            'site:twitter.com "hiring" "CGI" OR "VFX" artist',
-            'site:twitter.com "hiring" "blender" OR "unreal engine"',
-            'site:twitter.com "hiring" "generative AI"',
-            'site:x.com "hiring" designer "remote"',
-            'site:x.com "hiring" "3D artist"',
-
-            # ── Saudi Arabia focus ──
-            'site:x.com "hiring" designer "Saudi Arabia" OR "Riyadh"',
-            'site:x.com "hiring" "3D" OR "CGI" "Saudi" OR "KSA"',
-            'site:x.com "hiring" designer "Jeddah" OR "NEOM"',
-            'site:x.com "we are hiring" "Saudi" designer OR creative',
-            'site:twitter.com "hiring" designer "Riyadh" OR "Saudi"',
-            'site:x.com مطلوب مصمم السعودية',
-            'site:x.com توظيف مصمم الرياض OR جدة',
-            'site:x.com وظائف مصمم جرافيك السعودية',
-            'site:x.com مطلوب مصمم ثلاثي الابعاد السعودية',
-
-            # ── UAE / Dubai focus ──
-            'site:x.com "hiring" designer "Dubai" OR "Abu Dhabi"',
-            'site:x.com "hiring" "3D artist" OR "motion designer" "UAE"',
-            'site:x.com "we are hiring" "UAE" creative OR designer',
-            'site:twitter.com "hiring" designer "Dubai" OR "UAE"',
-            'site:x.com مطلوب مصمم دبي OR الامارات',
-            'site:x.com توظيف مصمم ابوظبي OR دبي',
-
-            # ── Egypt focus ──
-            'site:x.com "hiring" designer "Egypt" OR "Cairo"',
-            'site:x.com "hiring" "3D artist" OR "CGI" "Egypt"',
-            'site:x.com مطلوب مصمم مصر OR القاهرة',
-
-            # ── Gulf-wide + Qatar/Kuwait/Bahrain ──
-            'site:x.com "hiring" designer "Qatar" OR "Doha"',
-            'site:x.com "hiring" designer "Kuwait" OR "Bahrain"',
-            'site:x.com "hiring" creative "Gulf" OR "GCC" OR "MENA"',
-            'site:x.com وظائف مصمم قطر OR الكويت OR البحرين',
-
-            # ── Hashtag searches on X ──
-            'site:x.com #وظائف_السعودية مصمم',
-            'site:x.com #SaudiJobs designer',
-            'site:x.com #UAEjobs designer OR creative',
-            'site:x.com #وظائف_الامارات مصمم',
-        ]
-
-        for query in ddg_queries:
-            url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
+    def _syndication_requests(self):
+        """Scrape job account timelines via Twitter's syndication endpoint.
+        Returns up to 99 tweets per account, rendered as server-side HTML+JSON."""
+        for account in self.job_accounts:
+            url = f"https://syndication.twitter.com/srv/timeline-profile/screen-name/{account}"
             yield scrapy.Request(
                 url,
-                callback=self.parse_duckduckgo,
-                meta={'query': query},
+                callback=self.parse_syndication_profile,
+                meta={'account': account},
                 errback=self.handle_error,
                 dont_filter=True,
             )
 
-    def parse_duckduckgo(self, response):
-        """Parse DuckDuckGo search results for Twitter/X links"""
-        query = response.meta.get('query', 'unknown')
+    def parse_syndication_profile(self, response):
+        """Parse Twitter syndication timeline - extracts tweets from __NEXT_DATA__ JSON"""
+        account = response.meta.get('account', 'unknown')
 
-        results = response.css('a.result__a')
-        logger.info(f"DuckDuckGo found {len(results)} results for: {query}")
+        if response.status == 429:
+            logger.warning(f"Rate limited on @{account} - will retry")
+            return
 
-        pattern = re.compile(
-            r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
-            re.IGNORECASE
-        )
-        arabic_pattern = re.compile(
-            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب|وظيفة|وظائف|نبحث)',
-            re.IGNORECASE
-        )
+        # Extract __NEXT_DATA__ JSON embedded in the HTML
+        script = response.css('script#__NEXT_DATA__::text').get()
+        if not script:
+            # Fallback: regex extraction
+            match = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', response.text, re.DOTALL)
+            script = match.group(1) if match else None
 
-        for result in results[:15]:
-            href = result.css('::attr(href)').get('')
-            title = ' '.join(result.css('::text').getall()).strip()
+        if not script:
+            logger.debug(f"No syndication data for @{account}")
+            return
 
-            if not href:
+        try:
+            data = json.loads(script)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse syndication JSON for @{account}")
+            return
+
+        entries = (data.get('props', {})
+                       .get('pageProps', {})
+                       .get('timeline', {})
+                       .get('entries', []))
+
+        if not entries:
+            logger.debug(f"@{account}: no tweets in timeline")
+            return
+
+        logger.info(f"@{account}: found {len(entries)} tweets in timeline")
+        relevant_count = 0
+
+        for entry in entries:
+            content = entry.get('content', {})
+            tweet = content.get('tweet', content)
+
+            tweet_id = str(tweet.get('id_str', '') or entry.get('entry_id', '').replace('tweet-', ''))
+            if not tweet_id or tweet_id in self.seen_tweets:
+                continue
+            self.seen_tweets.add(tweet_id)
+
+            text = tweet.get('text', '')
+            if not text or not self._is_relevant(text):
                 continue
 
-            # Only process twitter.com or x.com links
-            is_twitter = 'twitter.com' in href or 'x.com' in href
-            if not is_twitter:
-                continue
+            relevant_count += 1
+            user = tweet.get('user', {})
+            username = user.get('screen_name', account)
+            display_name = user.get('name', username)
 
-            if not pattern.search(title) and not arabic_pattern.search(title):
-                continue
+            # Extract URLs from tweet entities
+            urls = []
+            for url_entity in tweet.get('entities', {}).get('urls', []):
+                expanded = url_entity.get('expanded_url', '')
+                if expanded and 'twitter.com' not in expanded and 'x.com' not in expanded:
+                    urls.append(expanded)
 
-            # Extract username and tweet ID from URL
-            username, tweet_id = self._parse_twitter_url(href)
+            # Get engagement metrics
+            likes = tweet.get('favorite_count', 0) or 0
+            retweets = tweet.get('retweet_count', 0) or 0
 
-            if tweet_id and tweet_id not in self.seen_tweets:
-                self.seen_tweets.add(tweet_id)
-                yield self._build_item(
-                    text=title,
-                    username=username,
-                    display_name=username,
-                    tweet_id=tweet_id,
-                    apply_link=None,
-                    likes=0,
-                    retweets=0,
-                    query=query,
-                )
+            yield self._build_item(
+                text=text,
+                username=username,
+                display_name=display_name,
+                tweet_id=tweet_id,
+                apply_link=self._find_apply_link(urls),
+                likes=likes,
+                retweets=retweets,
+                query=f'@{account}',
+            )
+
+        if relevant_count:
+            logger.info(f"@{account}: {relevant_count} relevant job tweets found!")
 
     # =========================================================================
     # HELPER METHODS
@@ -505,21 +341,22 @@ class TwitterSearchSpider(scrapy.Spider):
 
     def handle_error(self, failure):
         """Handle request failures gracefully"""
-        logger.warning(f"Twitter search request failed: {failure.request.url} - {failure.value}")
+        url = failure.request.url
+        if '429' in str(failure.value):
+            logger.warning(f"Rate limited: {url}")
+        else:
+            logger.warning(f"Request failed: {url} - {failure.value}")
+
+    def _is_relevant(self, text):
+        """Check if tweet text matches CV keywords (English + Arabic)"""
+        return is_relevant_social(text)
 
     def _build_item(self, text, username, display_name, tweet_id,
                     apply_link, likes, retweets, query):
         """Build a standardized job item from tweet data"""
-        # Extract location from tweet text
         location = self._extract_location(text)
-
-        # Extract job type
         job_type = self._extract_job_type(text)
-
-        # Build tweet URL
-        tweet_url = f"https://twitter.com/{username}/status/{tweet_id}" if tweet_id else ''
-
-        # Clean title (first 100 chars of tweet)
+        tweet_url = f"https://x.com/{username}/status/{tweet_id}" if tweet_id else ''
         title = self._extract_title(text)
 
         return {
@@ -541,13 +378,10 @@ class TwitterSearchSpider(scrapy.Spider):
     def _extract_title(self, text):
         """Extract a clean job title from tweet text (English + Arabic)"""
         patterns = [
-            # English patterns
             r'(?:hiring|looking\s*for)\s*(?:a\s+)?([^.!?\n]{10,80})',
             r'(?:open\s*)?(?:role|position):\s*([^.!?\n]{10,80})',
-            # Arabic patterns
             r'(?:مطلوب|نبحث عن|نحتاج)\s+([^.!?\n]{10,80})',
             r'(?:وظيفة|فرصة عمل):\s*([^.!?\n]{10,80})',
-            # Fallback: first line
             r'^([^.!?\n]{10,100})',
         ]
 
@@ -555,12 +389,10 @@ class TwitterSearchSpider(scrapy.Spider):
             match = re.search(pat, text, re.I)
             if match:
                 title = match.group(1).strip()
-                # Remove URLs
                 title = re.sub(r'https?://\S+', '', title).strip()
                 if len(title) > 10:
                     return title[:100]
 
-        # Fallback: first line
         first_line = text.split('\n')[0][:100]
         return re.sub(r'https?://\S+', '', first_line).strip() or text[:100]
 
@@ -576,30 +408,22 @@ class TwitterSearchSpider(scrapy.Spider):
             return 'Remote'
 
         location_map = [
-            # Saudi Arabia
             (r'\b(Riyadh|الرياض)\b', 'Saudi Arabia - Riyadh'),
             (r'\b(Jeddah|جدة|جده)\b', 'Saudi Arabia - Jeddah'),
             (r'\b(NEOM|نيوم)\b', 'Saudi Arabia - NEOM'),
             (r'\b(Dammam|الدمام)\b', 'Saudi Arabia - Dammam'),
             (r'\b(Saudi\s*Arabia|KSA|السعودية)\b', 'Saudi Arabia'),
-            # UAE
             (r'\b(Dubai|دبي)\b', 'UAE - Dubai'),
             (r'\b(Abu\s*Dhabi|ابوظبي|أبوظبي)\b', 'UAE - Abu Dhabi'),
             (r'\b(Sharjah|الشارقة)\b', 'UAE - Sharjah'),
             (r'\b(UAE|الامارات|الإمارات)\b', 'UAE'),
-            # Qatar
             (r'\b(Qatar|Doha|قطر|الدوحة)\b', 'Qatar'),
-            # Kuwait
             (r'\b(Kuwait|الكويت)\b', 'Kuwait'),
-            # Bahrain
             (r'\b(Bahrain|البحرين|المنامة)\b', 'Bahrain'),
-            # Oman
             (r'\b(Oman|عمان|مسقط)\b', 'Oman'),
-            # Egypt
             (r'\b(Cairo|القاهرة)\b', 'Egypt - Cairo'),
             (r'\b(Alexandria|الاسكندرية)\b', 'Egypt - Alexandria'),
             (r'\b(Egypt|مصر)\b', 'Egypt'),
-            # Europe
             (r'\b(London|UK)\b', 'UK'),
             (r'\b(Berlin|Germany)\b', 'Germany'),
             (r'\b(Amsterdam|Netherlands)\b', 'Netherlands'),
@@ -625,7 +449,6 @@ class TwitterSearchSpider(scrapy.Spider):
 
     def _find_apply_link(self, urls):
         """Find the best application link from a list of URLs"""
-        # Priority: job boards > company sites > any link
         job_domains = ['greenhouse', 'lever', 'workday', 'ashbyhq', 'bamboohr',
                        'jobs', 'careers', 'apply', 'hire', 'linkedin.com/jobs',
                        'bayt.com', 'gulftalent', 'naukrigulf', 'wuzzuf', 'indeed']

@@ -7,7 +7,15 @@ These are companies in Egypt/UAE that commonly hire designers, 3D artists, etc.
 
 import scrapy
 import re
-from job_finder.cv_config import RELEVANT_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, is_relevant
+
+# URL paths that indicate non-job pages (blog posts, news, press releases, etc.)
+_SKIP_URL_PARTS = [
+    '/blog/', '/news/', '/press/', '/about/', '/story/', '/article/',
+    '/media/', '/events/', '/insights/', '/resources/', '/podcast/',
+    '/whitepaper/', '/report/', '/magazine/', '/newsletter/',
+    '/privacy', '/terms', '/cookie', '/legal', '/sitemap',
+]
 
 
 class CareerPagesSpider(scrapy.Spider):
@@ -303,22 +311,31 @@ class CareerPagesSpider(scrapy.Spider):
         for link in job_links:
             title = link.css('::text').get()
             href = link.css('::attr(href)').get()
-            
+
             if not title or not href:
                 continue
-                
+
             title = title.strip()
-            
+
+            # Skip very short titles (nav links like "Apply", "More")
+            if len(title) < 5:
+                continue
+
             # Skip if not relevant to CV
             if not pattern.search(title):
                 continue
-            
+
             # Make link absolute
             if href.startswith('/'):
                 href = response.urljoin(href)
             elif not href.startswith('http'):
                 continue
-            
+
+            # Skip non-job URLs (blog, news, press, about pages)
+            href_lower = href.lower()
+            if any(part in href_lower for part in _SKIP_URL_PARTS):
+                continue
+
             # Avoid duplicates
             if href in seen_links:
                 continue
@@ -340,21 +357,28 @@ class CareerPagesSpider(scrapy.Spider):
         for card in job_cards:
             title = card.css('h2::text, h3::text, .job-title::text, .title::text, a::text').get()
             href = card.css('a::attr(href)').get()
-            
+
             if not title:
                 continue
-                
+
             title = title.strip()
-            
+
+            if len(title) < 5:
+                continue
+
             if not pattern.search(title):
                 continue
-            
+
             if href:
                 if href.startswith('/'):
                     href = response.urljoin(href)
                 elif not href.startswith('http'):
                     href = None
-            
+
+                # Skip non-job URLs
+                if href and any(part in href.lower() for part in _SKIP_URL_PARTS):
+                    href = None
+
             if href and href not in seen_links:
                 seen_links.add(href)
                 yield {

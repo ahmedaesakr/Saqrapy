@@ -6,7 +6,7 @@ Output should be combined with Wuzzuf results
 import scrapy
 from urllib.parse import urlencode
 import re
-from job_finder.cv_config import RELEVANT_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, SEARCH_KEYWORDS, is_relevant
 
 
 class IndeedSpider(scrapy.Spider):
@@ -14,25 +14,17 @@ class IndeedSpider(scrapy.Spider):
 
     # CV-based keywords for filtering
     relevant_keywords = RELEVANT_KEYWORDS
-    
-    # Keywords to search based on CV
-    search_keywords = [
-        "Product Designer",
-        "3D Artist",
-        "CGI Artist",
-        "UI UX Designer",
-        "Motion Designer",
-        "Generative AI",
-        "Blender Artist",
-        "Unreal Engine Developer"
-    ]
-    
+
+    # Use centralized search keywords from cv_config
+    search_keywords = SEARCH_KEYWORDS
+
     # Locations to search
     locations = [
         "Egypt",
         "UAE",
         "Dubai",
-        "Remote"
+        "Saudi Arabia",
+        "Remote",
     ]
     
     custom_settings = {
@@ -57,6 +49,8 @@ class IndeedSpider(scrapy.Spider):
                     base_url = "https://eg.indeed.com/jobs?"
                 elif location in ["UAE", "Dubai"]:
                     base_url = "https://ae.indeed.com/jobs?"
+                elif location in ["Saudi Arabia"]:
+                    base_url = "https://sa.indeed.com/jobs?"
                 else:
                     base_url = "https://www.indeed.com/jobs?"
                 
@@ -105,7 +99,7 @@ class IndeedSpider(scrapy.Spider):
             location = card.css('div.companyLocation::text').get()
             
             # Skip if title doesn't match CV keywords
-            if title and not pattern.search(title):
+            if title and not is_relevant(title=title):
                 self.logger.info(f"Skipping irrelevant title: {title}")
                 continue
             

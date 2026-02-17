@@ -75,3 +75,4 @@ job_finder/httpcache/
 *.swp
 *.swo
 *~
+.claude/

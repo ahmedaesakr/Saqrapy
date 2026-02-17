@@ -117,6 +117,7 @@ DOWNLOADER_MIDDLEWARES = {
 ITEM_PIPELINES = {
     "job_finder.pipelines.CleaningPipeline": 100,
     "job_finder.pipelines.DeduplicationPipeline": 200,
+    "job_finder.pipelines.RelevanceScoringPipeline": 300,
 }
 
 # =============================================================================

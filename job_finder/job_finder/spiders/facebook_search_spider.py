@@ -18,7 +18,7 @@ import re
 import json
 from urllib.parse import urlencode, quote_plus
 import logging
-from job_finder.cv_config import RELEVANT_KEYWORDS
+from job_finder.cv_config import RELEVANT_KEYWORDS, is_relevant_social
 
 logger = logging.getLogger(__name__)
 
