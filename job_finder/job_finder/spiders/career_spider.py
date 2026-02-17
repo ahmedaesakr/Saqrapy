@@ -17,9 +17,11 @@ class CareerPagesSpider(scrapy.Spider):
     relevant_keywords = RELEVANT_KEYWORDS
     
     # List of company career pages to scrape
-    # These are companies in Egypt/UAE that hire creative/tech talent
+    # Companies in Egypt, Saudi Arabia, UAE, and Gulf that hire creative/tech talent
     company_pages = [
-        # Egypt Companies
+        # ══════════════════════════════════════════
+        # EGYPT - Tech & Creative Companies
+        # ══════════════════════════════════════════
         {
             'name': 'Vodafone Egypt',
             'url': 'https://careers.vodafone.com/search-jobs?location=egypt',
@@ -45,7 +47,120 @@ class CareerPagesSpider(scrapy.Spider):
             'url': 'https://fawry.com/careers/',
             'location': 'Egypt'
         },
-        # UAE Companies
+        {
+            'name': 'Wuzzuf (HALAN)',
+            'url': 'https://www.halan.com/careers',
+            'location': 'Egypt'
+        },
+        {
+            'name': 'Valeo Egypt',
+            'url': 'https://www.valeo.com/en/find-a-job/',
+            'location': 'Egypt'
+        },
+        {
+            'name': 'Si-Ware Systems',
+            'url': 'https://www.si-ware.com/careers',
+            'location': 'Egypt'
+        },
+        {
+            'name': 'Breadfast',
+            'url': 'https://breadfast.com/careers',
+            'location': 'Egypt'
+        },
+        # Egypt Creative / Design Studios
+        {
+            'name': 'Kijamii (Digital Agency)',
+            'url': 'https://www.kijamii.com/careers/',
+            'location': 'Egypt'
+        },
+        {
+            'name': 'Elmenus',
+            'url': 'https://www.elmenus.com/careers',
+            'location': 'Egypt'
+        },
+        {
+            'name': 'Rabbit (Delivery)',
+            'url': 'https://www.wearerabbit.com/careers',
+            'location': 'Egypt'
+        },
+
+        # ══════════════════════════════════════════
+        # SAUDI ARABIA - Vision 2030 & Tech Companies
+        # ══════════════════════════════════════════
+        {
+            'name': 'NEOM',
+            'url': 'https://www.neom.com/en-us/careers',
+            'location': 'Saudi Arabia - NEOM'
+        },
+        {
+            'name': 'Saudi Aramco Digital',
+            'url': 'https://www.aramco.com/en/careers',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'STC (Saudi Telecom)',
+            'url': 'https://www.stc.com.sa/content/stc/sa/en/careers.html',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'Manga Productions',
+            'url': 'https://mangaproductions.com/careers/',
+            'location': 'Saudi Arabia - Riyadh'
+        },
+        {
+            'name': 'Saudi Digital Academy',
+            'url': 'https://sda.edu.sa/careers',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'Lucid Motors Saudi',
+            'url': 'https://www.lucidmotors.com/careers',
+            'location': 'Saudi Arabia - Jeddah'
+        },
+        {
+            'name': 'Noon (Saudi)',
+            'url': 'https://careers.noon.com/',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'Jahez (Delivery)',
+            'url': 'https://jahez.net/careers',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'Foodics',
+            'url': 'https://www.foodics.com/careers/',
+            'location': 'Saudi Arabia - Riyadh'
+        },
+        {
+            'name': 'Tamara (BNPL)',
+            'url': 'https://tamara.co/careers',
+            'location': 'Saudi Arabia - Riyadh'
+        },
+        {
+            'name': 'Salla (E-commerce)',
+            'url': 'https://salla.com/careers/',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'Qiddiya (Entertainment)',
+            'url': 'https://www.qiddiya.com/careers',
+            'location': 'Saudi Arabia - Riyadh'
+        },
+        {
+            'name': 'Red Sea Global',
+            'url': 'https://www.redseaglobal.com/en/careers',
+            'location': 'Saudi Arabia'
+        },
+        {
+            'name': 'ROSHN (Real Estate)',
+            'url': 'https://www.roshn.sa/en/careers',
+            'location': 'Saudi Arabia'
+        },
+
+        # ══════════════════════════════════════════
+        # UAE - Tech, Gaming & Creative Companies
+        # ══════════════════════════════════════════
         {
             'name': 'Careem',
             'url': 'https://www.careem.com/careers/',
@@ -53,32 +168,97 @@ class CareerPagesSpider(scrapy.Spider):
         },
         {
             'name': 'noon',
-            'url': 'https://www.noonacademy.com/career',
-            'location': 'UAE'
+            'url': 'https://careers.noon.com/',
+            'location': 'UAE - Dubai'
         },
         {
             'name': 'Kitopi',
             'url': 'https://www.kitopi.com/careers',
             'location': 'UAE'
         },
-        # Gaming/Creative Studios
         {
             'name': 'Ubisoft Abu Dhabi',
             'url': 'https://www.ubisoft.com/en-us/company/careers/locations/abu-dhabi',
-            'location': 'UAE'
+            'location': 'UAE - Abu Dhabi'
         },
         {
             'name': 'Virtuzone',
             'url': 'https://www.vz.ae/careers/',
             'location': 'UAE'
         },
-        # Architecture/Design Studios
         {
             'name': 'Perkins&Will Dubai',
             'url': 'https://perkinswill.com/careers/',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'Majid Al Futtaim',
+            'url': 'https://careers.majidalfuttaim.com/',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'Etisalat (e&)',
+            'url': 'https://www.etisalat.ae/en/careers.html',
             'location': 'UAE'
         },
-        # More can be added...
+        {
+            'name': 'Emirates Group',
+            'url': 'https://www.emiratesgroupcareers.com/',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'EXPO City Dubai',
+            'url': 'https://www.expocitydubai.com/en/careers',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'Talabat',
+            'url': 'https://www.talabat.com/careers',
+            'location': 'UAE - Dubai'
+        },
+
+        # ══════════════════════════════════════════
+        # QATAR / KUWAIT / BAHRAIN
+        # ══════════════════════════════════════════
+        {
+            'name': 'Qatar Foundation',
+            'url': 'https://www.qf.org.qa/careers',
+            'location': 'Qatar - Doha'
+        },
+        {
+            'name': 'Al Jazeera Media',
+            'url': 'https://careers.aljazeera.net/',
+            'location': 'Qatar - Doha'
+        },
+        {
+            'name': 'Zain Kuwait',
+            'url': 'https://www.kw.zain.com/en/careers',
+            'location': 'Kuwait'
+        },
+
+        # ══════════════════════════════════════════
+        # GLOBAL - Creative / Gaming / Design Studios
+        # ══════════════════════════════════════════
+        {
+            'name': 'Epic Games',
+            'url': 'https://www.epicgames.com/site/en-US/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Unity Technologies',
+            'url': 'https://careers.unity.com/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Canva',
+            'url': 'https://www.canva.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Figma',
+            'url': 'https://www.figma.com/careers/',
+            'location': 'Remote / Global'
+        },
     ]
     
     custom_settings = {

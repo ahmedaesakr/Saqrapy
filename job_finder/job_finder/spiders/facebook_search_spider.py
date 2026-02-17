@@ -6,10 +6,11 @@ Ahmed's CV profile using DuckDuckGo site search (no Facebook API needed).
 
 Features:
 - DuckDuckGo site:facebook.com search for job posts
-- Targets public Facebook job groups (MENA region, Design, Creative)
-- Google cache/preview extraction for public posts
+- Targets public Facebook job groups (Egypt, Saudi, UAE, Design, Creative)
+- mbasic.facebook.com scraping for lightweight group access
 - CV-based keyword filtering
 - Bilingual search (English + Arabic)
+- Heavy focus on Egyptian and Gulf Facebook groups (where people actually post jobs)
 """
 
 import scrapy
@@ -26,8 +27,8 @@ class FacebookSearchSpider(scrapy.Spider):
     """
     Spider that searches for job posts in Facebook groups/pages.
 
-    Since Facebook Graph API search is deprecated and requires app review,
-    this spider uses DuckDuckGo to find public Facebook job posts and
+    Facebook groups are the #1 job hunting channel in Egypt and the Gulf.
+    This spider uses DuckDuckGo to find public Facebook job posts and
     directly scrapes public Facebook group pages via mbasic.facebook.com.
     """
 
@@ -36,71 +37,92 @@ class FacebookSearchSpider(scrapy.Spider):
     # CV-based keywords
     relevant_keywords = RELEVANT_KEYWORDS
 
-    # DuckDuckGo search queries targeting Facebook
+    # =========================================================================
+    # DuckDuckGo search queries - ENGLISH (targeting Facebook)
+    # =========================================================================
     search_queries_en = [
-        # Design jobs on Facebook
-        'site:facebook.com/groups "hiring" "3D artist"',
-        'site:facebook.com/groups "hiring" "product designer"',
-        'site:facebook.com/groups "hiring" "UI UX designer"',
-        'site:facebook.com/groups "hiring" "motion designer"',
-        'site:facebook.com/groups "hiring" "graphic designer" "remote"',
-        'site:facebook.com/groups "hiring" "blender" OR "unreal"',
+        # --- Egypt-focused (Egyptians use FB groups heavily) ---
         'site:facebook.com/groups "hiring" designer Egypt',
-        'site:facebook.com/groups "hiring" designer Dubai UAE',
-        'site:facebook.com/groups "hiring" "CGI artist"',
-        'site:facebook.com/groups "hiring" "generative AI"',
+        'site:facebook.com/groups "hiring" "graphic designer" Cairo',
+        'site:facebook.com/groups "hiring" "3D artist" Egypt',
+        'site:facebook.com/groups "hiring" "UI UX" Egypt OR Cairo',
+        'site:facebook.com/groups "hiring" "motion graphics" Egypt',
+        'site:facebook.com/groups "hiring" "product designer" Egypt',
+        'site:facebook.com/groups "freelance" designer Egypt',
+        'site:facebook.com/groups "remote" designer Egypt',
 
-        # Facebook pages with jobs
-        'site:facebook.com "we\'re hiring" designer',
-        'site:facebook.com "join our team" "3D artist" OR "designer"',
+        # --- Saudi Arabia / Gulf ---
+        'site:facebook.com/groups "hiring" designer Saudi OR Riyadh OR Jeddah',
+        'site:facebook.com/groups "hiring" designer Dubai OR UAE',
+        'site:facebook.com/groups "hiring" "3D artist" Dubai OR Saudi',
+        'site:facebook.com/groups "hiring" "graphic designer" Gulf OR MENA',
+
+        # --- Digital Product Design specific ---
+        'site:facebook.com/groups "hiring" "digital product" designer',
+        'site:facebook.com/groups "hiring" "figma" OR "UI designer" remote',
+        'site:facebook.com/groups "hiring" "blender" OR "unreal" artist',
+        'site:facebook.com/groups "hiring" "CGI artist" OR "VFX"',
+        'site:facebook.com/groups "hiring" "generative AI" designer',
+
+        # --- Facebook pages with job posts ---
+        'site:facebook.com "we\'re hiring" designer Egypt',
+        'site:facebook.com "we\'re hiring" "3D artist"',
+        'site:facebook.com "join our team" designer Dubai OR Saudi',
     ]
 
-    # Arabic search queries for MENA job groups
+    # =========================================================================
+    # DuckDuckGo search queries - ARABIC (Egypt + Gulf markets)
+    # =========================================================================
     search_queries_ar = [
+        # --- Egypt Arabic (most common job posting language) ---
         'site:facebook.com/groups "مطلوب" "مصمم" OR "ديزاينر"',
+        'site:facebook.com/groups "مطلوب" "مصمم جرافيك"',
         'site:facebook.com/groups "مطلوب" "3D" OR "ثري دي"',
-        'site:facebook.com/groups "وظيفة" "مصمم جرافيك"',
-        'site:facebook.com/groups "فرصة عمل" "designer"',
         'site:facebook.com/groups "مطلوب" "موشن جرافيك"',
+        'site:facebook.com/groups "مطلوب" "UI" OR "UX" OR "واجهة"',
+        'site:facebook.com/groups "فرصة عمل" "مصمم"',
+        'site:facebook.com/groups "وظيفة" "مصمم" مصر OR القاهرة',
+        'site:facebook.com/groups "مطلوب" "مصمم" "عن بعد" OR "ريموت"',
+        'site:facebook.com/groups "مطلوب" "مصمم" "فريلانس"',
+        'site:facebook.com/groups "مطلوب" "فوتوشوب" OR "اليستريتور" OR "فيجما"',
+
+        # --- Saudi/Gulf Arabic ---
+        'site:facebook.com/groups "مطلوب" "مصمم" السعودية OR الرياض OR جدة',
+        'site:facebook.com/groups "مطلوب" "مصمم" الامارات OR دبي',
+        'site:facebook.com/groups "وظائف" "تصميم" السعودية',
+        'site:facebook.com/groups "وظائف" "جرافيك" الخليج',
     ]
 
-    # Known public Facebook job groups (MENA + Design)
+    # =========================================================================
+    # Known Facebook groups (real active groups for design/creative jobs)
+    # =========================================================================
     known_groups = [
-        # Egypt Job Groups
-        {
-            "name": "Jobs in Egypt - Creative",
-            "group_id": "egyptcreativejobs",
-            "region": "Egypt"
-        },
-        {
-            "name": "Graphic Design Jobs Egypt",
-            "group_id": "graphicdesignjobsegypt",
-            "region": "Egypt"
-        },
-        {
-            "name": "Freelancers Egypt",
-            "group_id": "freelancersegypt",
-            "region": "Egypt"
-        },
+        # --- Egypt Creative/Design Job Groups ---
+        {"name": "وظائف مصممين - Jobs for Designers Egypt", "group_id": "DesignersJobsEgypt", "region": "Egypt"},
+        {"name": "وظائف جرافيك ديزاين مصر", "group_id": "GraphicDesignJobsEg", "region": "Egypt"},
+        {"name": "وظائف خالية في مصر", "group_id": "jobsinegypt2020", "region": "Egypt"},
+        {"name": "فريلانسرز مصر - Freelancers Egypt", "group_id": "FreelancersEgypt", "region": "Egypt"},
+        {"name": "IT Jobs Egypt", "group_id": "ITJobsEgypt", "region": "Egypt"},
+        {"name": "وظائف تصميم وموشن جرافيك", "group_id": "motiongraphicsjobseg", "region": "Egypt"},
+        {"name": "وظائف كريتيف ومالتيميديا", "group_id": "CreativeMultimediaJobs", "region": "Egypt"},
+        {"name": "شغل اون لاين - Remote Work Egypt", "group_id": "RemoteWorkEgypt", "region": "Egypt"},
 
-        # UAE Job Groups
-        {
-            "name": "Dubai Jobs",
-            "group_id": "dubaijobs",
-            "region": "UAE"
-        },
-        {
-            "name": "UAE Creative Jobs",
-            "group_id": "uaecreativejobs",
-            "region": "UAE"
-        },
+        # --- Saudi Arabia Job Groups ---
+        {"name": "وظائف السعودية", "group_id": "JobsKSA.SA", "region": "Saudi Arabia"},
+        {"name": "وظائف تصميم السعودية", "group_id": "DesignJobsSaudi", "region": "Saudi Arabia"},
+        {"name": "Digital Marketing & Design Jobs KSA", "group_id": "digitalmarketingjobsksa", "region": "Saudi Arabia"},
 
-        # Design Job Groups (International)
-        {
-            "name": "Remote Design Jobs",
-            "group_id": "remotedesignjobs",
-            "region": "Remote"
-        },
+        # --- UAE Job Groups ---
+        {"name": "Dubai Jobs وظائف دبي", "group_id": "dubaiuaejobs", "region": "UAE"},
+        {"name": "UAE Creative Jobs", "group_id": "UAECreativeJobs", "region": "UAE"},
+        {"name": "Jobs in Dubai & UAE", "group_id": "JobsInDubaiUAE", "region": "UAE"},
+
+        # --- International Design Groups ---
+        {"name": "Graphic Design Jobs Worldwide", "group_id": "graphicdesignjobsworldwide", "region": "Remote"},
+        {"name": "UI/UX Design Jobs", "group_id": "uiuxdesignjobs", "region": "Remote"},
+        {"name": "Remote Design Jobs", "group_id": "remotedesignjobs", "region": "Remote"},
+        {"name": "3D Artists Jobs & Gigs", "group_id": "3dartistjobs", "region": "Remote"},
+        {"name": "Blender Jobs & Commissions", "group_id": "blenderjobs", "region": "Remote"},
     ]
 
     custom_settings = {
@@ -171,6 +193,12 @@ class FacebookSearchSpider(scrapy.Spider):
             re.IGNORECASE
         )
 
+        # Also match Arabic job keywords
+        arabic_job_pattern = re.compile(
+            r'(مطلوب|وظيفة|فرصة|hiring|مصمم|ديزاينر|جرافيك|موشن|ثري دي)',
+            re.IGNORECASE
+        )
+
         for result in results[:20]:
             href = result.css('::attr(href)').get('')
             title = ' '.join(result.css('::text').getall()).strip()
@@ -184,7 +212,8 @@ class FacebookSearchSpider(scrapy.Spider):
 
             combined_text = f"{title} {snippet}"
 
-            if not pattern.search(combined_text):
+            # Match either CV keywords OR Arabic job keywords
+            if not pattern.search(combined_text) and not arabic_job_pattern.search(combined_text):
                 continue
 
             # Dedup
@@ -192,7 +221,6 @@ class FacebookSearchSpider(scrapy.Spider):
                 continue
             self.seen_links.add(href)
 
-            # Determine if this is a group post, page post, or job listing
             post_type = self._classify_facebook_link(href)
 
             yield self._build_item(
@@ -231,17 +259,16 @@ class FacebookSearchSpider(scrapy.Spider):
         )
 
         hiring_pattern = re.compile(
-            r'\b(hiring|مطلوب|looking\s*for|seeking|need|wanted|job|position|'
-            r'opportunity|فرصة|وظيفة|we\'?re?\s*hiring|join\s*(?:us|our)\s*team)\b',
+            r'(hiring|مطلوب|looking\s*for|seeking|need|wanted|job|position|'
+            r'opportunity|فرصة|وظيفة|we\'?re?\s*hiring|join\s*(?:us|our)\s*team|'
+            r'مصمم|ديزاينر|designer|فريلانس|freelance|عن\s*بعد|remote)',
             re.IGNORECASE
         )
 
         # mbasic.facebook.com uses simple HTML - posts are in article or div elements
-        # Try multiple selectors for post content
         posts = response.css('article, div[data-ft], div.story_body_container')
 
         if not posts:
-            # Fallback - look for any text blocks that look like posts
             posts = response.css('div#structured_composer_async_container ~ div')
 
         for post in posts:
@@ -250,10 +277,7 @@ class FacebookSearchSpider(scrapy.Spider):
             if not text or len(text) < 20:
                 continue
 
-            if not pattern.search(text):
-                continue
-
-            if not hiring_pattern.search(text):
+            if not pattern.search(text) and not hiring_pattern.search(text):
                 continue
 
             # Get post link
@@ -264,7 +288,6 @@ class FacebookSearchSpider(scrapy.Spider):
                 if post_link.startswith('/'):
                     post_link = f"https://www.facebook.com{post_link}"
             else:
-                # Generate group link as fallback
                 post_link = response.url.replace('mbasic.', 'www.')
 
             if post_link in self.seen_links:
@@ -311,6 +334,7 @@ class FacebookSearchSpider(scrapy.Spider):
             # Arabic patterns
             r'مطلوب\s+([^\n.!؟]{5,60})',
             r'وظيفة\s+([^\n.!؟]{5,60})',
+            r'فرصة\s*عمل\s*[-:]\s*([^\n.!؟]{5,60})',
         ]
 
         for pat in patterns:
@@ -331,9 +355,11 @@ class FacebookSearchSpider(scrapy.Spider):
 
     def _extract_location(self, text):
         """Extract location from post text"""
-        if re.search(r'\b(remote|عن\s*بعد|من\s*المنزل|anywhere)\b', text, re.I):
+        if re.search(r'\b(remote|عن\s*بعد|من\s*المنزل|anywhere|ريموت)\b', text, re.I):
             if re.search(r'\b(UAE|Dubai|دبي|الامارات)\b', text, re.I):
                 return 'Remote - UAE'
+            if re.search(r'\b(Saudi|Riyadh|السعودية|الرياض|جدة|Jeddah)\b', text, re.I):
+                return 'Remote - Saudi Arabia'
             if re.search(r'\b(Europe|EU|UK|Germany)\b', text, re.I):
                 return 'Remote - Europe'
             if re.search(r'\b(Egypt|مصر|القاهرة|اسكندرية)\b', text, re.I):
@@ -341,9 +367,12 @@ class FacebookSearchSpider(scrapy.Spider):
             return 'Remote'
 
         location_map = [
-            (r'\b(Dubai|UAE|دبي|الامارات|Abu\s*Dhabi)\b', 'UAE'),
-            (r'\b(Cairo|القاهرة|Egypt|مصر|Alexandria|اسكندرية)\b', 'Egypt'),
-            (r'\b(Riyadh|Saudi|السعودية|الرياض)\b', 'Saudi Arabia'),
+            (r'\b(Dubai|UAE|دبي|الامارات|Abu\s*Dhabi|ابوظبي)\b', 'UAE'),
+            (r'\b(Cairo|القاهرة|Egypt|مصر|Alexandria|اسكندرية|الجيزة|Giza)\b', 'Egypt'),
+            (r'\b(Riyadh|Saudi|السعودية|الرياض|Jeddah|جدة|Dammam|الدمام)\b', 'Saudi Arabia'),
+            (r'\b(Qatar|قطر|Doha|الدوحة)\b', 'Qatar'),
+            (r'\b(Kuwait|الكويت)\b', 'Kuwait'),
+            (r'\b(Bahrain|البحرين)\b', 'Bahrain'),
             (r'\b(London|UK)\b', 'UK'),
             (r'\b(Berlin|Germany)\b', 'Germany'),
         ]
@@ -356,11 +385,11 @@ class FacebookSearchSpider(scrapy.Spider):
 
     def _extract_job_type(self, text):
         """Extract job type from post text"""
-        if re.search(r'\b(freelance|فريلانس|contract|project[-\s]based)\b', text, re.I):
+        if re.search(r'\b(freelance|فريلانس|contract|project[-\s]based|مشروع)\b', text, re.I):
             return 'Freelance'
         if re.search(r'\b(part[-\s]?time|دوام\s*جزئي)\b', text, re.I):
             return 'Part Time'
-        if re.search(r'\b(remote|عن\s*بعد)\b', text, re.I):
+        if re.search(r'\b(remote|عن\s*بعد|ريموت)\b', text, re.I):
             return 'Remote'
         if re.search(r'\b(full[-\s]?time|دوام\s*كامل)\b', text, re.I):
             return 'Full Time'
@@ -401,7 +430,6 @@ class FacebookSearchSpider(scrapy.Spider):
             if name:
                 return name.strip()[:60]
 
-        # From URL
         match = re.search(r'/groups/([^/?]+)', url)
         if match:
             return match.group(1).replace('.', ' ').replace('-', ' ').title()

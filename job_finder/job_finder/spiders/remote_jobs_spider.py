@@ -35,6 +35,7 @@ class RemoteJobsSpider(scrapy.Spider):
     
     # Search queries for finding remote jobs
     search_queries = [
+        # ── Global / Europe / UAE ──
         "remote 3D artist jobs UAE",
         "remote product designer jobs Europe",
         "remote UI UX designer jobs Dubai",
@@ -47,10 +48,69 @@ class RemoteJobsSpider(scrapy.Spider):
         "remote web designer jobs Germany",
         "remote frontend developer jobs Netherlands",
         "remote digital designer jobs UK",
+
+        # ── Saudi Arabia / Gulf ──
+        "remote designer jobs Saudi Arabia",
+        "remote 3D artist jobs Riyadh",
+        "remote product designer jobs KSA NEOM",
+        "remote UI UX designer Saudi Arabia",
+        "remote motion graphics Saudi Arabia",
+        "remote CGI VFX jobs Gulf GCC",
+        "hybrid designer jobs Riyadh Jeddah",
+        "remote creative jobs Qatar Kuwait",
+
+        # ── Egypt ──
+        "remote designer jobs Egypt Cairo",
+        "remote 3D artist jobs Egypt",
+        "remote UI UX designer Egypt",
     ]
     
-    # Curated list of companies with remote positions (UAE, Europe)
+    # Curated list of companies with remote positions (Saudi, UAE, Europe)
     known_remote_companies = {
+        # Saudi Arabia Companies (Vision 2030 = lots of remote/hybrid creative roles)
+        "Saudi Arabia": [
+            {
+                "name": "NEOM",
+                "url": "https://www.neom.com/en-us/careers",
+                "type": "Mega Project"
+            },
+            {
+                "name": "Manga Productions",
+                "url": "https://mangaproductions.com/careers/",
+                "type": "Animation/Creative"
+            },
+            {
+                "name": "Foodics",
+                "url": "https://www.foodics.com/careers/",
+                "type": "Tech"
+            },
+            {
+                "name": "Tamara",
+                "url": "https://tamara.co/careers",
+                "type": "Fintech"
+            },
+            {
+                "name": "Salla",
+                "url": "https://salla.com/careers/",
+                "type": "E-commerce"
+            },
+            {
+                "name": "Qiddiya",
+                "url": "https://www.qiddiya.com/careers",
+                "type": "Entertainment"
+            },
+            {
+                "name": "Red Sea Global",
+                "url": "https://www.redseaglobal.com/en/careers",
+                "type": "Tourism/Development"
+            },
+            {
+                "name": "Lucid Motors Saudi",
+                "url": "https://www.lucidmotors.com/careers",
+                "type": "Automotive"
+            },
+        ],
+
         # UAE Companies with Remote Culture
         "UAE": [
             {
@@ -83,8 +143,18 @@ class RemoteJobsSpider(scrapy.Spider):
                 "url": "https://www.bayt.com/en/careers/",
                 "type": "HR Tech"
             },
+            {
+                "name": "Majid Al Futtaim",
+                "url": "https://careers.majidalfuttaim.com/",
+                "type": "Retail/Entertainment"
+            },
+            {
+                "name": "EXPO City Dubai",
+                "url": "https://www.expocitydubai.com/en/careers",
+                "type": "Events/Creative"
+            },
         ],
-        
+
         # European Companies with Remote-First/Hybrid Culture
         "Europe": [
             # Germany
@@ -112,7 +182,7 @@ class RemoteJobsSpider(scrapy.Spider):
                 "country": "Germany",
                 "type": "Music Tech"
             },
-            
+
             # Netherlands
             {
                 "name": "Booking.com",
@@ -126,7 +196,7 @@ class RemoteJobsSpider(scrapy.Spider):
                 "country": "Netherlands",
                 "type": "Fintech"
             },
-            
+
             # UK
             {
                 "name": "Revolut",
@@ -152,7 +222,7 @@ class RemoteJobsSpider(scrapy.Spider):
                 "country": "UK",
                 "type": "Design Tech"
             },
-            
+
             # Sweden
             {
                 "name": "Spotify",
@@ -166,7 +236,7 @@ class RemoteJobsSpider(scrapy.Spider):
                 "country": "Sweden",
                 "type": "Fintech"
             },
-            
+
             # France
             {
                 "name": "Datadog",
@@ -180,7 +250,7 @@ class RemoteJobsSpider(scrapy.Spider):
                 "country": "France",
                 "type": "Ad Tech"
             },
-            
+
             # Remote-First Companies
             {
                 "name": "GitLab",
@@ -243,9 +313,9 @@ class RemoteJobsSpider(scrapy.Spider):
     
     def start_requests(self):
         """Generate initial requests from multiple sources"""
-        
+
         # 1. Search engine queries (using DuckDuckGo - more scrape-friendly)
-        for query in self.search_queries[:5]:  # Limit initial queries
+        for query in self.search_queries[:10]:
             duckduckgo_url = f"https://html.duckduckgo.com/html/?q={quote_plus(query)}"
             yield scrapy.Request(
                 duckduckgo_url,
@@ -256,8 +326,22 @@ class RemoteJobsSpider(scrapy.Spider):
                 },
                 errback=self.handle_error
             )
-        
-        # 2. Known company career pages - UAE
+
+        # 2. Known company career pages - Saudi Arabia
+        for company in self.known_remote_companies.get("Saudi Arabia", []):
+            yield scrapy.Request(
+                company['url'],
+                callback=self.parse_career_page,
+                meta={
+                    'company_name': company['name'],
+                    'region': 'Saudi Arabia',
+                    'country': 'Saudi Arabia',
+                    'company_type': company.get('type', 'Unknown')
+                },
+                errback=self.handle_error
+            )
+
+        # 3. Known company career pages - UAE
         for company in self.known_remote_companies.get("UAE", []):
             yield scrapy.Request(
                 company['url'],
@@ -269,8 +353,8 @@ class RemoteJobsSpider(scrapy.Spider):
                 },
                 errback=self.handle_error
             )
-        
-        # 3. Known company career pages - Europe
+
+        # 4. Known company career pages - Europe
         for company in self.known_remote_companies.get("Europe", []):
             yield scrapy.Request(
                 company['url'],
@@ -283,8 +367,8 @@ class RemoteJobsSpider(scrapy.Spider):
                 },
                 errback=self.handle_error
             )
-        
-        # 4. Remote job boards
+
+        # 5. Remote job boards
         for board in self.remote_job_boards:
             yield scrapy.Request(
                 board['url'],

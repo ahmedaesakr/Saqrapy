@@ -2,12 +2,14 @@
 Twitter/X Job Search Spider - Social Media Search Edition
 
 Searches Twitter/X for job posts matching Ahmed's CV profile.
+Upgraded with Saudi Arabia, Emirates, Egypt, and Gulf region focus.
 
 Features:
 - Twitter API v2 Recent Search (requires Bearer Token)
 - Fallback to Nitter public instances (no auth needed)
-- DuckDuckGo site:twitter.com search (no auth needed)
-- CV-based keyword filtering
+- DuckDuckGo site:twitter.com + site:x.com search (no auth needed)
+- CV-based keyword filtering + Arabic keyword support
+- Saudi Arabia, UAE, Egypt, and Gulf job market coverage
 - Extracts tweet text, author, links, engagement metrics
 - Handles threads and quoted tweets
 """
@@ -39,7 +41,7 @@ class TwitterSearchSpider(scrapy.Spider):
 
     # Twitter search queries (each under 512 chars for API)
     search_queries = [
-        # Direct hiring tweets
+        # ── English: Direct hiring tweets ──
         '"hiring" "3D artist"',
         '"hiring" "product designer"',
         '"hiring" "UI designer" OR "UX designer"',
@@ -53,10 +55,40 @@ class TwitterSearchSpider(scrapy.Spider):
         '#remotejobs designer',
         '#designjobs',
         '#3Dartist hiring',
+
+        # ── Saudi Arabia / Gulf focus ──
+        '"hiring" "designer" "Saudi Arabia" OR "Riyadh" OR "Jeddah"',
+        '"hiring" "designer" "Dubai" OR "Abu Dhabi" OR "UAE"',
+        '"hiring" "3D" OR "CGI" "Saudi" OR "Gulf"',
+        '"hiring" "motion" OR "VFX" "Riyadh" OR "Dubai"',
+        '"we are hiring" designer "KSA" OR "Saudi"',
+        '#SaudiJobs designer',
+        '#UAEjobs designer',
+        '#وظائف_السعودية مصمم',
+        '#وظائف_الامارات مصمم',
+
+        # ── Arabic: Saudi & Gulf hiring tweets ──
+        'مطلوب مصمم ثلاثي الابعاد',
+        'مطلوب مصمم جرافيك السعودية',
+        'نبحث عن مصمم UI UX',
+        'مطلوب مصمم موشن جرافيك',
+        'وظيفة مصمم الرياض OR جدة',
+        'مطلوب مصمم دبي OR ابوظبي',
+        'توظيف مصمم عن بعد',
+        '#توظيف مصمم',
+        '#وظائف مصمم',
+        'فرصة عمل مصمم ثري دي',
+        'مطلوب مصمم CGI OR بلندر OR Blender',
+
+        # ── Egypt focus ──
+        '"hiring" "designer" "Egypt" OR "Cairo"',
+        'مطلوب مصمم مصر OR القاهرة',
+        '#وظائف_مصر مصمم',
     ]
 
     # Accounts known to post design/creative jobs
     job_accounts = [
+        # ── International Design Jobs ──
         "designjobsboard",
         "UXDesignJobs",
         "remoteworkhunt",
@@ -65,6 +97,23 @@ class TwitterSearchSpider(scrapy.Spider):
         "AIJobsBoard",
         "RemoteOK",
         "wikijobart",
+
+        # ── Saudi Arabia & Gulf Job Accounts ──
+        "SaudiJobs_",
+        "JobsSaudi",
+        "Baaborh",              # Saudi job listings
+        "Jadarat_sa",           # Jadarat Saudi platform
+        "ABORH_",               # Saudi HR platform
+        "LinkedInKSA",          # LinkedIn Saudi
+        "GulfTalent",           # Gulf-wide talent
+        "DubaiCareers",         # Dubai careers
+        "UAEJobs_",             # UAE jobs
+        "NaukriGulf",           # Naukri Gulf
+        "waborh",               # Saudi recruitment
+
+        # ── Egypt & MENA ──
+        "WuzzufCareers",        # Wuzzuf Egypt
+        "JobsMasterEG",         # Egypt jobs
     ]
 
     # Nitter instances (public Twitter mirrors, no auth needed)
@@ -110,8 +159,12 @@ class TwitterSearchSpider(scrapy.Spider):
     def _api_requests(self):
         """Generate Twitter API v2 search requests"""
         for query in self.search_queries:
+            # Use lang:en for English queries, lang:ar for Arabic
+            has_arabic = bool(re.search(r'[\u0600-\u06FF]', query))
+            lang_filter = 'lang:ar' if has_arabic else 'lang:en'
+
             params = {
-                'query': f'{query} -is:retweet lang:en',
+                'query': f'{query} -is:retweet {lang_filter}',
                 'max_results': 50,
                 'tweet.fields': 'created_at,author_id,public_metrics,entities,context_annotations',
                 'user.fields': 'name,username,verified',
@@ -154,6 +207,10 @@ class TwitterSearchSpider(scrapy.Spider):
             r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
             re.IGNORECASE
         )
+        arabic_pattern = re.compile(
+            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب)',
+            re.IGNORECASE
+        )
 
         for tweet in tweets:
             tweet_id = tweet.get('id', '')
@@ -164,7 +221,7 @@ class TwitterSearchSpider(scrapy.Spider):
 
             text = tweet.get('text', '')
 
-            if not pattern.search(text):
+            if not pattern.search(text) and not arabic_pattern.search(text):
                 continue
 
             author_id = tweet.get('author_id', '')
@@ -215,7 +272,7 @@ class TwitterSearchSpider(scrapy.Spider):
                 )
 
             # Nitter search
-            for query in self.search_queries[:5]:
+            for query in self.search_queries[:8]:
                 clean_query = query.replace('"', '').replace('#', '')
                 url = f"https://{instance}/search?q={quote_plus(clean_query)}&f=tweets"
                 yield scrapy.Request(
@@ -238,6 +295,10 @@ class TwitterSearchSpider(scrapy.Spider):
             r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
             re.IGNORECASE
         )
+        arabic_pattern = re.compile(
+            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب)',
+            re.IGNORECASE
+        )
 
         # Nitter uses .timeline-item for tweets
         tweets = response.css('.timeline-item')
@@ -245,7 +306,7 @@ class TwitterSearchSpider(scrapy.Spider):
         for tweet in tweets:
             text = ' '.join(tweet.css('.tweet-content::text, .tweet-content a::text').getall()).strip()
 
-            if not text or not pattern.search(text):
+            if not text or (not pattern.search(text) and not arabic_pattern.search(text)):
                 continue
 
             # Get tweet link
@@ -289,6 +350,10 @@ class TwitterSearchSpider(scrapy.Spider):
             r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
             re.IGNORECASE
         )
+        arabic_pattern = re.compile(
+            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب)',
+            re.IGNORECASE
+        )
 
         tweets = response.css('.timeline-item')
         logger.info(f"Nitter search found {len(tweets)} tweets for: {query}")
@@ -296,7 +361,7 @@ class TwitterSearchSpider(scrapy.Spider):
         for tweet in tweets:
             text = ' '.join(tweet.css('.tweet-content::text, .tweet-content a::text').getall()).strip()
 
-            if not text or not pattern.search(text):
+            if not text or (not pattern.search(text) and not arabic_pattern.search(text)):
                 continue
 
             tweet_link = tweet.css('.tweet-link::attr(href)').get()
@@ -327,8 +392,9 @@ class TwitterSearchSpider(scrapy.Spider):
     # =========================================================================
 
     def _duckduckgo_requests(self):
-        """Generate DuckDuckGo site:twitter.com search requests"""
+        """Generate DuckDuckGo site:twitter.com + site:x.com search requests"""
         ddg_queries = [
+            # ── English: Global design/creative jobs ──
             'site:twitter.com "hiring" "3D artist"',
             'site:twitter.com "hiring" "product designer" "remote"',
             'site:twitter.com "hiring" "UI UX designer"',
@@ -338,6 +404,42 @@ class TwitterSearchSpider(scrapy.Spider):
             'site:twitter.com "hiring" "generative AI"',
             'site:x.com "hiring" designer "remote"',
             'site:x.com "hiring" "3D artist"',
+
+            # ── Saudi Arabia focus ──
+            'site:x.com "hiring" designer "Saudi Arabia" OR "Riyadh"',
+            'site:x.com "hiring" "3D" OR "CGI" "Saudi" OR "KSA"',
+            'site:x.com "hiring" designer "Jeddah" OR "NEOM"',
+            'site:x.com "we are hiring" "Saudi" designer OR creative',
+            'site:twitter.com "hiring" designer "Riyadh" OR "Saudi"',
+            'site:x.com مطلوب مصمم السعودية',
+            'site:x.com توظيف مصمم الرياض OR جدة',
+            'site:x.com وظائف مصمم جرافيك السعودية',
+            'site:x.com مطلوب مصمم ثلاثي الابعاد السعودية',
+
+            # ── UAE / Dubai focus ──
+            'site:x.com "hiring" designer "Dubai" OR "Abu Dhabi"',
+            'site:x.com "hiring" "3D artist" OR "motion designer" "UAE"',
+            'site:x.com "we are hiring" "UAE" creative OR designer',
+            'site:twitter.com "hiring" designer "Dubai" OR "UAE"',
+            'site:x.com مطلوب مصمم دبي OR الامارات',
+            'site:x.com توظيف مصمم ابوظبي OR دبي',
+
+            # ── Egypt focus ──
+            'site:x.com "hiring" designer "Egypt" OR "Cairo"',
+            'site:x.com "hiring" "3D artist" OR "CGI" "Egypt"',
+            'site:x.com مطلوب مصمم مصر OR القاهرة',
+
+            # ── Gulf-wide + Qatar/Kuwait/Bahrain ──
+            'site:x.com "hiring" designer "Qatar" OR "Doha"',
+            'site:x.com "hiring" designer "Kuwait" OR "Bahrain"',
+            'site:x.com "hiring" creative "Gulf" OR "GCC" OR "MENA"',
+            'site:x.com وظائف مصمم قطر OR الكويت OR البحرين',
+
+            # ── Hashtag searches on X ──
+            'site:x.com #وظائف_السعودية مصمم',
+            'site:x.com #SaudiJobs designer',
+            'site:x.com #UAEjobs designer OR creative',
+            'site:x.com #وظائف_الامارات مصمم',
         ]
 
         for query in ddg_queries:
@@ -361,6 +463,10 @@ class TwitterSearchSpider(scrapy.Spider):
             r'\b(' + '|'.join(self.relevant_keywords) + r')\b',
             re.IGNORECASE
         )
+        arabic_pattern = re.compile(
+            r'(مصمم|ديزاينر|ثلاثي|3D|CGI|موشن|UI|UX|بلندر|Blender|انريل|Unreal|جرافيك|فريلانس|عن بعد|توظيف|مطلوب|وظيفة|وظائف|نبحث)',
+            re.IGNORECASE
+        )
 
         for result in results[:15]:
             href = result.css('::attr(href)').get('')
@@ -374,7 +480,7 @@ class TwitterSearchSpider(scrapy.Spider):
             if not is_twitter:
                 continue
 
-            if not pattern.search(title):
+            if not pattern.search(title) and not arabic_pattern.search(title):
                 continue
 
             # Extract username and tweet ID from URL
@@ -433,11 +539,15 @@ class TwitterSearchSpider(scrapy.Spider):
         }
 
     def _extract_title(self, text):
-        """Extract a clean job title from tweet text"""
-        # Try to find a job title pattern
+        """Extract a clean job title from tweet text (English + Arabic)"""
         patterns = [
+            # English patterns
             r'(?:hiring|looking\s*for)\s*(?:a\s+)?([^.!?\n]{10,80})',
             r'(?:open\s*)?(?:role|position):\s*([^.!?\n]{10,80})',
+            # Arabic patterns
+            r'(?:مطلوب|نبحث عن|نحتاج)\s+([^.!?\n]{10,80})',
+            r'(?:وظيفة|فرصة عمل):\s*([^.!?\n]{10,80})',
+            # Fallback: first line
             r'^([^.!?\n]{10,100})',
         ]
 
@@ -455,17 +565,41 @@ class TwitterSearchSpider(scrapy.Spider):
         return re.sub(r'https?://\S+', '', first_line).strip() or text[:100]
 
     def _extract_location(self, text):
-        """Extract location from tweet text"""
-        if re.search(r'\b(remote|anywhere|worldwide|global)\b', text, re.I):
-            if re.search(r'\b(UAE|Dubai)\b', text, re.I):
+        """Extract location from tweet text (expanded for Gulf region)"""
+        if re.search(r'\b(remote|anywhere|worldwide|global|عن بعد|ريموت)\b', text, re.I):
+            if re.search(r'\b(UAE|Dubai|دبي|الامارات)\b', text, re.I):
                 return 'Remote - UAE'
+            if re.search(r'\b(Saudi|KSA|السعودية|الرياض)\b', text, re.I):
+                return 'Remote - Saudi Arabia'
             if re.search(r'\b(Europe|EU|UK|Germany)\b', text, re.I):
                 return 'Remote - Europe'
             return 'Remote'
 
         location_map = [
-            (r'\b(Dubai|UAE|Abu\s*Dhabi)\b', 'UAE'),
-            (r'\b(Cairo|Egypt|Alexandria)\b', 'Egypt'),
+            # Saudi Arabia
+            (r'\b(Riyadh|الرياض)\b', 'Saudi Arabia - Riyadh'),
+            (r'\b(Jeddah|جدة|جده)\b', 'Saudi Arabia - Jeddah'),
+            (r'\b(NEOM|نيوم)\b', 'Saudi Arabia - NEOM'),
+            (r'\b(Dammam|الدمام)\b', 'Saudi Arabia - Dammam'),
+            (r'\b(Saudi\s*Arabia|KSA|السعودية)\b', 'Saudi Arabia'),
+            # UAE
+            (r'\b(Dubai|دبي)\b', 'UAE - Dubai'),
+            (r'\b(Abu\s*Dhabi|ابوظبي|أبوظبي)\b', 'UAE - Abu Dhabi'),
+            (r'\b(Sharjah|الشارقة)\b', 'UAE - Sharjah'),
+            (r'\b(UAE|الامارات|الإمارات)\b', 'UAE'),
+            # Qatar
+            (r'\b(Qatar|Doha|قطر|الدوحة)\b', 'Qatar'),
+            # Kuwait
+            (r'\b(Kuwait|الكويت)\b', 'Kuwait'),
+            # Bahrain
+            (r'\b(Bahrain|البحرين|المنامة)\b', 'Bahrain'),
+            # Oman
+            (r'\b(Oman|عمان|مسقط)\b', 'Oman'),
+            # Egypt
+            (r'\b(Cairo|القاهرة)\b', 'Egypt - Cairo'),
+            (r'\b(Alexandria|الاسكندرية)\b', 'Egypt - Alexandria'),
+            (r'\b(Egypt|مصر)\b', 'Egypt'),
+            # Europe
             (r'\b(London|UK)\b', 'UK'),
             (r'\b(Berlin|Germany)\b', 'Germany'),
             (r'\b(Amsterdam|Netherlands)\b', 'Netherlands'),
@@ -478,14 +612,14 @@ class TwitterSearchSpider(scrapy.Spider):
         return 'Not specified'
 
     def _extract_job_type(self, text):
-        """Extract job type from tweet text"""
-        if re.search(r'\b(freelance|contract|gig)\b', text, re.I):
+        """Extract job type from tweet text (English + Arabic)"""
+        if re.search(r'\b(freelance|contract|gig|فريلانس|عمل حر|مستقل)\b', text, re.I):
             return 'Freelance'
-        if re.search(r'\b(part[-\s]?time)\b', text, re.I):
+        if re.search(r'\b(part[-\s]?time|دوام جزئي)\b', text, re.I):
             return 'Part Time'
-        if re.search(r'\b(remote)\b', text, re.I):
+        if re.search(r'\b(remote|عن بعد|ريموت)\b', text, re.I):
             return 'Remote'
-        if re.search(r'\b(full[-\s]?time)\b', text, re.I):
+        if re.search(r'\b(full[-\s]?time|دوام كامل)\b', text, re.I):
             return 'Full Time'
         return 'Not specified'
 
@@ -493,7 +627,8 @@ class TwitterSearchSpider(scrapy.Spider):
         """Find the best application link from a list of URLs"""
         # Priority: job boards > company sites > any link
         job_domains = ['greenhouse', 'lever', 'workday', 'ashbyhq', 'bamboohr',
-                       'jobs', 'careers', 'apply', 'hire', 'linkedin.com/jobs']
+                       'jobs', 'careers', 'apply', 'hire', 'linkedin.com/jobs',
+                       'bayt.com', 'gulftalent', 'naukrigulf', 'wuzzuf', 'indeed']
 
         for url in urls:
             if any(domain in url.lower() for domain in job_domains):
