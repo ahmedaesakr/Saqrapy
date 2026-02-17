@@ -30,27 +30,48 @@ Thumbs.db
 # OSX miscellaneous
 .DS_Store
 
-# --- PROJECT SPECIFIC PRIVACY ---
-# Personal Data
+# =============================================================================
+# PROJECT SPECIFIC PRIVACY - Ahmed's Job Finder
+# =============================================================================
+
+# --- Personal Data (CV, Resume) ---
 /CV/
 *.pdf
-*.docx
 
-# Scraping Output (leads and results)
+# --- Scraping Output (job results, leads) ---
 job_finder/*.json
 job_finder/*.xlsx
 job_finder/output/
-job_finder/jobs.json
-job_finder/jobs_v*.json
 job_finder/all_jobs_v*.xlsx
 
-# Debugging Assets (contains session snapshots)
-*.html
-linkedin_debug_*.html
-wuzzuf_dump.html
+# --- Debug Snapshots (may contain session info) ---
+job_finder/*.html
+job_finder/linkedin_debug_*.html
+job_finder/wuzzuf_dump.html
 
-# Secrets & Config
+# --- Secrets, API Keys, Credentials ---
 .env
+.env.*
+*.env
 proxies.txt
+proxy_list.txt
+
+# --- Logs ---
 *.log
-job_finder/remote_spider.log
+job_finder/*.log
+
+# --- Python cache ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Scrapy runtime ---
+.scrapy/
+httpcache/
+job_finder/.scrapy/
+job_finder/httpcache/
+
+# --- IDE ---
+*.swp
+*.swo
+*~
