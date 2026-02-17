@@ -1,5 +1,6 @@
 
 import scrapy
+import re
 from urllib.parse import urlencode
 
 class WuzzufSpider(scrapy.Spider):
@@ -17,6 +18,14 @@ class WuzzufSpider(scrapy.Spider):
         "Generative AI",
         "Blender",
         "Unreal Engine"
+    ]
+    
+    # CV-based keywords for filtering
+    relevant_keywords = [
+        r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
+        r'Motion', r'Animation', r'Visualizer', r'Art Director', 
+        r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
+        r'VFX', r'Creative', r'Frontend', r'Web'
     ]
 
     def start_requests(self):
@@ -49,21 +58,11 @@ class WuzzufSpider(scrapy.Spider):
             job_type = card.css('span.css-uc9rga::text').get()
             
 
-
             # Strict Filtering: Check if title is relevant
             # Use regex for word boundaries to avoid partial matches like "Waiter" (AI) or "Sustainability" (AI)
-            import re
-            
-            relevant_keywords = [
-                r'Designer', r'3D', r'Artist', r'CGI', r'Product', r'UI', r'UX', 
-                r'Motion', r'Animation', r'Visualizer', r'Art Director', 
-                r'Unreal', r'Blender', r'Generative', r'AI', r'Graphic',
-                r'VFX', r'Creative', r'Frontend', r'Web'
-            ]
             
             # Create a combined regex pattern: \b(Designer|3D|...)\b
-            # We escape keywords just in case, though they are simple here
-            pattern = re.compile(r'\b(' + '|'.join(relevant_keywords) + r')\b', re.IGNORECASE)
+            pattern = re.compile(r'\b(' + '|'.join(self.relevant_keywords) + r')\b', re.IGNORECASE)
             
             if not pattern.search(title):
                 self.logger.info(f"Skipping irrelevant title: {title}")

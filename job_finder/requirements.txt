@@ -1,0 +1,34 @@
+# Job Finder - Requirements
+# Enhanced "Chad" Edition with all advanced capabilities
+
+# Core Scrapy framework
+scrapy>=2.11.0
+
+# For Brotli compression (required for many modern sites)
+brotli>=1.2.0
+
+# For Excel export
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# For Playwright integration (optional - for JS-heavy sites)
+# Uncomment and install if needed:
+# scrapy-playwright>=0.0.33
+# playwright>=1.40.0
+
+# For async operations
+twisted>=23.8.0
+
+# For better JSON handling
+itemadapter>=0.8.0
+
+# Optional: For enhanced proxy support
+# httpx>=0.25.0
+# aiohttp>=3.9.0
+
+# Optional: For captcha solving integration
+# requests>=2.31.0  # For 2Captcha API calls
+
+# Development tools
+# pytest>=7.4.0
+# black>=23.0.0

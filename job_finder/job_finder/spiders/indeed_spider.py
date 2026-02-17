@@ -136,7 +136,6 @@ class IndeedSpider(scrapy.Spider):
         if next_start < 50 and job_cards:
             next_url = response.url
             if 'start=' in next_url:
-                import re
                 next_url = re.sub(r'start=\d+', f'start={next_start}', next_url)
             else:
                 next_url = f"{next_url}&start={next_start}"
