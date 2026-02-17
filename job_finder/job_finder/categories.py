@@ -4,9 +4,8 @@ Categorizes scraped jobs into Remote, Freelance, Full-Time, Hybrid, and by Regio
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 from enum import Enum
-from dataclasses import dataclass
 
 
 class JobType(Enum):
@@ -28,16 +27,6 @@ class Region(Enum):
     USA = "usa"
     GLOBAL = "global"
     UNKNOWN = "unknown"
-
-
-@dataclass
-class CategoryConfig:
-    """Configuration for a job category"""
-    name: str
-    patterns: List[str]
-    icon: str
-    output_file: str
-    priority: int = 0  # Higher = more specific
 
 
 # Category Definitions
@@ -285,70 +274,3 @@ categorizer = JobCategorizer()
 def categorize_job(job: Dict) -> Dict:
     """Convenience function to categorize a job"""
     return categorizer.categorize(job)
-
-
-def filter_by_category(jobs: List[Dict], category: JobType) -> List[Dict]:
-    """Filter jobs by category"""
-    return [j for j in jobs if j.get('job_category') == category.value]
-
-
-def filter_by_region(jobs: List[Dict], region: Region) -> List[Dict]:
-    """Filter jobs by region"""
-    return [j for j in jobs if j.get('region_category') == region.value]
-
-
-def filter_remote_only(jobs: List[Dict]) -> List[Dict]:
-    """Filter to remote jobs only"""
-    return [j for j in jobs if j.get('is_remote', False)]
-
-
-if __name__ == "__main__":
-    # Test categorization
-    test_jobs = [
-        {
-            "title": "Senior Product Designer",
-            "company": "Remote-First Startup",
-            "location": "Remote - Anywhere",
-            "type": "Full Time",
-            "source": "LinkedIn"
-        },
-        {
-            "title": "3D Artist - Contract",
-            "company": "Game Studio",
-            "location": "Dubai, UAE",
-            "type": "Contract",
-            "source": "Career Page"
-        },
-        {
-            "title": "UI/UX Designer",
-            "company": "Tech Company",
-            "location": "Cairo, Egypt",
-            "type": "Full Time",
-            "source": "Wuzzuf"
-        },
-        {
-            "title": "Motion Graphics Project",
-            "company": "Freelance Client",
-            "location": "Remote",
-            "type": "Freelance",
-            "source": "Upwork"
-        },
-        {
-            "title": "Senior Designer - Hybrid",
-            "company": "Enterprise Corp",
-            "location": "Berlin, Germany (2 days office)",
-            "type": "Full Time",
-            "source": "Indeed"
-        },
-    ]
-    
-    print("=" * 60)
-    print("Job Categorization Test")
-    print("=" * 60)
-    
-    for job in test_jobs:
-        categorized = categorize_job(job)
-        print(f"\n{categorized['job_category_icon']} {categorized['title']}")
-        print(f"   Type: {categorized['job_category']}")
-        print(f"   {categorized['region_icon']} Region: {categorized['region_category']}")
-        print(f"   Remote: {categorized['is_remote']}")

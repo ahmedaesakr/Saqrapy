@@ -81,33 +81,14 @@ DEFAULT_REQUEST_HEADERS = {
 # MIDDLEWARE CONFIGURATION
 # =============================================================================
 
-# Spider middlewares
-SPIDER_MIDDLEWARES = {
-    "job_finder.middlewares.JobFinderSpiderMiddleware": 543,
-}
-
 # Downloader middlewares - ORDERED by priority (lower = earlier)
 DOWNLOADER_MIDDLEWARES = {
-    # First: Random User-Agent rotation
     "job_finder.middlewares.RandomUserAgentMiddleware": 400,
-    
-    # Second: Proxy rotation (if enabled)
     "job_finder.middlewares.ProxyMiddleware": 410,
-    
-    # Third: Random delays
     "job_finder.middlewares.RandomDelayMiddleware": 420,
-    
-    # Fourth: Captcha detection
     "job_finder.middlewares.CaptchaDetectionMiddleware": 430,
-    
-    # Fifth: Enhanced retry with backoff
     "job_finder.middlewares.ExponentialBackoffRetryMiddleware": 550,
-    
-    # Disable default retry middleware
     "scrapy.downloadermiddlewares.retry.RetryMiddleware": None,
-    
-    # Default downloader middleware
-    "job_finder.middlewares.JobFinderDownloaderMiddleware": 543,
 }
 
 # =============================================================================

@@ -131,18 +131,20 @@ echo [10/10] telegram_jobs
 echo [10/10] DONE
 echo.
 
-echo  PHASE 4: Categorize + Excel
+echo  PHASE 4: Categorize + Excel + XML
 echo ============================================
 
 cd /d "%~dp0"
 "%VENV_PY%" categorize_jobs.py
 "%VENV_PY%" json_to_excel_v2.py
+"%VENV_PY%" json_to_xml.py
 
 echo.
 echo ============================================
 echo  FULL SCRAPE COMPLETE - Run ID: %RUN_ID%
 echo ============================================
 echo  Excel: job_finder\all_jobs_v2_latest.xlsx
+echo  XML:   job_finder\all_jobs_latest.xml
 echo ============================================
 pause
 goto end

@@ -25,10 +25,200 @@ class CareerPagesSpider(scrapy.Spider):
     relevant_keywords = RELEVANT_KEYWORDS
     
     # List of company career pages to scrape
-    # Companies in Egypt, Saudi Arabia, UAE, and Gulf that hire creative/tech talent
+    # PRIORITY ORDER: Design studios & agencies first, then tech companies
     company_pages = [
         # ══════════════════════════════════════════
-        # EGYPT - Tech & Creative Companies
+        # DESIGN STUDIOS / AGENCIES / PRODUCT DESIGN
+        # (Most relevant to CGI Artist & Product Designer)
+        # ══════════════════════════════════════════
+
+        # --- Global Design & Creative Studios ---
+        {
+            'name': 'Pentagram',
+            'url': 'https://www.pentagram.com/about/jobs',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'IDEO',
+            'url': 'https://www.ideo.com/jobs',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Frog Design',
+            'url': 'https://www.frog.co/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'R/GA',
+            'url': 'https://www.rga.com/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'ustwo Studios',
+            'url': 'https://www.ustwo.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Huge Inc',
+            'url': 'https://www.hugeinc.com/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'MediaMonks (S4 Capital)',
+            'url': 'https://media.monks.com/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Instrument',
+            'url': 'https://www.instrument.com/careers',
+            'location': 'Remote / Global'
+        },
+
+        # --- 3D / CGI / VFX Studios ---
+        {
+            'name': 'Framestore',
+            'url': 'https://www.framestore.com/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'ILM (Industrial Light & Magic)',
+            'url': 'https://www.ilm.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'MPC (Moving Picture Company)',
+            'url': 'https://www.mpcvfx.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'DNEG',
+            'url': 'https://www.dneg.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'The Mill',
+            'url': 'https://www.themill.com/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Buck Design',
+            'url': 'https://buck.co/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Tendril',
+            'url': 'https://tendril.ca/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'ManvsMachine',
+            'url': 'https://mvsm.com/about',
+            'location': 'Remote / Global'
+        },
+
+        # --- Gaming Studios (Unreal/Blender) ---
+        {
+            'name': 'Epic Games',
+            'url': 'https://www.epicgames.com/site/en-US/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Unity Technologies',
+            'url': 'https://careers.unity.com/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Ubisoft Abu Dhabi',
+            'url': 'https://www.ubisoft.com/en-us/company/careers/locations/abu-dhabi',
+            'location': 'UAE - Abu Dhabi'
+        },
+        {
+            'name': 'Riot Games',
+            'url': 'https://www.riotgames.com/en/work-with-us',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Blizzard Entertainment',
+            'url': 'https://careers.blizzard.com/',
+            'location': 'Remote / Global'
+        },
+
+        # --- Product Design / SaaS Companies ---
+        {
+            'name': 'Figma',
+            'url': 'https://www.figma.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Canva',
+            'url': 'https://www.canva.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Miro',
+            'url': 'https://miro.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Notion',
+            'url': 'https://www.notion.so/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Framer',
+            'url': 'https://www.framer.com/careers/',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Webflow',
+            'url': 'https://webflow.com/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'InVision',
+            'url': 'https://www.invisionapp.com/company/careers',
+            'location': 'Remote / Global'
+        },
+        {
+            'name': 'Pitch',
+            'url': 'https://pitch.com/about#careers',
+            'location': 'Remote / Europe'
+        },
+
+        # --- MENA Design Agencies ---
+        {
+            'name': 'Kijamii (Digital Agency)',
+            'url': 'https://www.kijamii.com/careers/',
+            'location': 'Egypt'
+        },
+        {
+            'name': 'DG Khan (Creative Agency)',
+            'url': 'https://dgkhan.com/careers',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'Serviceplan Middle East',
+            'url': 'https://www.serviceplan.com/en/careers.html',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'Leo Burnett Middle East',
+            'url': 'https://www.leoburnett.com/careers',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'FP7 McCann Dubai',
+            'url': 'https://www.fp7mccann.com/careers',
+            'location': 'UAE - Dubai'
+        },
+        {
+            'name': 'Impact BBDO',
+            'url': 'https://impactbbdo.com/careers/',
+            'location': 'UAE - Dubai'
+        },
+
+        # ══════════════════════════════════════════
+        # EGYPT - Tech Companies
         # ══════════════════════════════════════════
         {
             'name': 'Vodafone Egypt',
@@ -66,29 +256,13 @@ class CareerPagesSpider(scrapy.Spider):
             'location': 'Egypt'
         },
         {
-            'name': 'Si-Ware Systems',
-            'url': 'https://www.si-ware.com/careers',
-            'location': 'Egypt'
-        },
-        {
-            'name': 'Breadfast',
-            'url': 'https://breadfast.com/careers',
-            'location': 'Egypt'
-        },
-        # Egypt Creative / Design Studios
-        {
-            'name': 'Kijamii (Digital Agency)',
-            'url': 'https://www.kijamii.com/careers/',
-            'location': 'Egypt'
-        },
-        {
             'name': 'Elmenus',
             'url': 'https://www.elmenus.com/careers',
             'location': 'Egypt'
         },
         {
-            'name': 'Rabbit (Delivery)',
-            'url': 'https://www.wearerabbit.com/careers',
+            'name': 'Breadfast',
+            'url': 'https://breadfast.com/careers',
             'location': 'Egypt'
         },
 
@@ -167,7 +341,7 @@ class CareerPagesSpider(scrapy.Spider):
         },
 
         # ══════════════════════════════════════════
-        # UAE - Tech, Gaming & Creative Companies
+        # UAE - Tech Companies
         # ══════════════════════════════════════════
         {
             'name': 'Careem',
@@ -182,16 +356,6 @@ class CareerPagesSpider(scrapy.Spider):
         {
             'name': 'Kitopi',
             'url': 'https://www.kitopi.com/careers',
-            'location': 'UAE'
-        },
-        {
-            'name': 'Ubisoft Abu Dhabi',
-            'url': 'https://www.ubisoft.com/en-us/company/careers/locations/abu-dhabi',
-            'location': 'UAE - Abu Dhabi'
-        },
-        {
-            'name': 'Virtuzone',
-            'url': 'https://www.vz.ae/careers/',
             'location': 'UAE'
         },
         {
@@ -242,30 +406,6 @@ class CareerPagesSpider(scrapy.Spider):
             'name': 'Zain Kuwait',
             'url': 'https://www.kw.zain.com/en/careers',
             'location': 'Kuwait'
-        },
-
-        # ══════════════════════════════════════════
-        # GLOBAL - Creative / Gaming / Design Studios
-        # ══════════════════════════════════════════
-        {
-            'name': 'Epic Games',
-            'url': 'https://www.epicgames.com/site/en-US/careers',
-            'location': 'Remote / Global'
-        },
-        {
-            'name': 'Unity Technologies',
-            'url': 'https://careers.unity.com/',
-            'location': 'Remote / Global'
-        },
-        {
-            'name': 'Canva',
-            'url': 'https://www.canva.com/careers/',
-            'location': 'Remote / Global'
-        },
-        {
-            'name': 'Figma',
-            'url': 'https://www.figma.com/careers/',
-            'location': 'Remote / Global'
         },
     ]
     
